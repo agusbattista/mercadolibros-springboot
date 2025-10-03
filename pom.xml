@@ -63,6 +63,8 @@
                 <version>2.29</version>
                 <executions>
                     <execution>
+                    	<?m2e execute onConfiguration?>
+                        <phase>validate</phase>
                         <goals>
                             <goal>format</goal>
                         </goals>
