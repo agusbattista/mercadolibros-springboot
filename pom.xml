@@ -76,7 +76,7 @@
                       <m2e>
                         <execute>onConfiguration</execute>
                       </m2e>
-                    -->
+                      -->
                         <phase>validate</phase>
                         <goals>
                             <goal>format</goal>
