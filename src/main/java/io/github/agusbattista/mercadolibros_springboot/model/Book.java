@@ -1,6 +1,9 @@
 package io.github.agusbattista.mercadolibros_springboot.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 @Entity
 @Table(name = "books")
@@ -10,12 +13,14 @@ public class Book {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  // agregar validaciones @NotBlank, @Positivem etc.
+  @Column(unique = true, nullable = false)
+  @NotNull(message = "El ISBN no puede ser nulo")
   private String isbn;
-  private String title;
+
+  @NotBlank private String title;
   // reemplazar authors por lista de autores (entidad)
   private String authors;
-  private double price;
+  @Positive private double price;
   private String description;
   private String publisher;
 

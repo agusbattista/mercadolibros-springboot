@@ -8,11 +8,11 @@ public interface BookService {
 
   List<Book> findAll();
 
-  Optional<Book> findById(Long id);
+  Optional<Book> findByIsbn(String isbn);
 
   Book save(Book book);
 
-  void deleteById(Long id);
+  void deleteByIsbn(String isbn);
 
-  Book update(Long id, Book book);
+  Book update(String isbn, Book book);
 }
