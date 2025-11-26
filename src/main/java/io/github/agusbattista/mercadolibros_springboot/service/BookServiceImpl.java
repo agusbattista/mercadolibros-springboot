@@ -1,5 +1,6 @@
 package io.github.agusbattista.mercadolibros_springboot.service;
 
+import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoundException;
 import io.github.agusbattista.mercadolibros_springboot.model.Book;
 import io.github.agusbattista.mercadolibros_springboot.repository.BookRepository;
 import java.util.List;
@@ -23,8 +24,8 @@ public class BookServiceImpl implements BookService {
   }
 
   @Override
-  public Optional<Book> findById(Long id) {
-    return bookRepository.findById(id);
+  public Optional<Book> findByIsbn(String isbn) {
+    return bookRepository.findByIsbn(isbn);
   }
 
   @Override
@@ -33,23 +34,33 @@ public class BookServiceImpl implements BookService {
   }
 
   @Override
-  public void deleteById(Long id) {
-    bookRepository.deleteById(id);
+  public void deleteByIsbn(String isbn) {
+    Book book =
+        bookRepository
+            .findByIsbn(isbn)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException(
+                        "No se puede eliminar. " + this.isbnNotFound(isbn)));
+    bookRepository.delete(book);
   }
 
   @Override
-  public Book update(Long id, Book book) {
-    return this.findById(id)
+  public Book update(String isbn, Book book) {
+    return this.findByIsbn(isbn)
         .map(
             existingBook -> {
-              existingBook.setIsbn(book.getIsbn());
               existingBook.setTitle(book.getTitle());
               existingBook.setAuthors(book.getAuthors());
               existingBook.setPrice(book.getPrice());
               existingBook.setDescription(book.getDescription());
               existingBook.setPublisher(book.getPublisher());
-              return bookRepository.save(existingBook);
+              return this.save(existingBook);
             })
-        .orElseThrow(() -> new RuntimeException("Book not found with id: " + id));
+        .orElseThrow(() -> new ResourceNotFoundException(this.isbnNotFound(isbn)));
+  }
+
+  private String isbnNotFound(String isbn) {
+    return "Libro con ISBN: " + isbn + " no encontrado.";
   }
 }

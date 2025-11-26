@@ -4,6 +4,7 @@ import io.github.agusbattista.mercadolibros_springboot.model.Book;
 import io.github.agusbattista.mercadolibros_springboot.service.BookService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,34 +29,31 @@ public class BookController {
   }
 
   @GetMapping
-  public List<Book> findAll() {
-    return bookService.findAll();
+  public ResponseEntity<List<Book>> findAll() {
+    return ResponseEntity.ok(bookService.findAll());
   }
 
-  @GetMapping("{id}")
-  public ResponseEntity<Book> findById(@PathVariable Long id) {
+  @GetMapping("/{isbn}")
+  public ResponseEntity<Book> getBookByIsbn(@PathVariable String isbn) {
     return bookService
-        .findById(id)
+        .findByIsbn(isbn)
         .map(ResponseEntity::ok)
         .orElse(ResponseEntity.notFound().build());
   }
 
   @PostMapping
-  public Book save(@RequestBody Book book) {
-    return bookService.save(book);
+  public ResponseEntity<Book> save(@RequestBody Book book) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(bookService.save(book));
   }
 
-  @PutMapping("{id}")
-  public Book update(@PathVariable Long id, @RequestBody Book book) {
-    return bookService.update(id, book);
+  @PutMapping("/{isbn}")
+  public ResponseEntity<Book> update(@PathVariable String isbn, @RequestBody Book book) {
+    return ResponseEntity.ok(bookService.update(isbn, book));
   }
 
-  @DeleteMapping("{id}")
-  public ResponseEntity<Void> delete(@PathVariable Long id) {
-    if (bookService.findById(id).isEmpty()) {
-      return ResponseEntity.notFound().build();
-    }
-    bookService.deleteById(id);
+  @DeleteMapping("/{isbn}")
+  public ResponseEntity<Void> delete(@PathVariable String isbn) {
+    bookService.deleteByIsbn(isbn);
     return ResponseEntity.noContent().build();
   }
 }
