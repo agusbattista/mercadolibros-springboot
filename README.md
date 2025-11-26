@@ -48,10 +48,10 @@ phpMyAdmin estará disponible en:
 ### Endpoints disponibles
 
 - `GET /api/books` - Listar todos los libros
-- `GET /api/books/{id}` - Obtener un libro por ID
+- `GET /api/books/{isbn}` - Obtener un libro por ISBN
 - `POST /api/books` - Crear un libro
-- `PUT /api/books/{id}` - Actualizar un libro
-- `DELETE /api/books/{id}` - Eliminar un libro
+- `PUT /api/books/{isbn}` - Actualizar un libro
+- `DELETE /api/books/{isbn}` - Eliminar un libro
 
 ### Detener los servicios
 ```bash
