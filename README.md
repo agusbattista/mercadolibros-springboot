@@ -49,6 +49,16 @@ phpMyAdmin estará disponible en:
 
 - `GET /api/books` - Listar todos los libros
 - `GET /api/books/{isbn}` - Obtener un libro por ISBN
+- `GET /api/books/search` - Buscar libros por criterios (título, autores, género, editorial)
+  - **Parámetros opcionales (query params):**
+    - `title` - Buscar por título (búsqueda parcial, no es sensible a mayúsculas y minúsculas)
+    - `authors` - Buscar por autores (búsqueda parcial, no es sensible a mayúsculas y minúsculas)
+    - `genre` - Buscar por género (búsqueda exacta, no es sensible a mayúsculas y minúsculas)
+    - `publisher` - Buscar por editorial (búsqueda parcial, no es sensible a mayúsculas y minúsculas)
+  - **Ejemplos:**
+    - `/api/books/search?title=eternauta` - Libros cuyo título contenga "eternauta"
+    - `/api/books/search?authors=poe&genre=terror` - Libros de "poe" del género "terror"
+    - `/api/books/search` - Sin parámetros, devuelve todos los libros
 - `POST /api/books` - Crear un libro
 - `PUT /api/books/{isbn}` - Actualizar un libro
 - `DELETE /api/books/{isbn}` - Eliminar un libro

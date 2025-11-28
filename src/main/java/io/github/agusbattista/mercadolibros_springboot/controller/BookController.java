@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @CrossOrigin(origins = "*")
@@ -39,6 +40,15 @@ public class BookController {
         .findByIsbn(isbn)
         .map(ResponseEntity::ok)
         .orElse(ResponseEntity.notFound().build());
+  }
+
+  @GetMapping("/search")
+  public ResponseEntity<List<Book>> findBooksByCriteria(
+      @RequestParam(required = false) String title,
+      @RequestParam(required = false) String authors,
+      @RequestParam(required = false) String genre,
+      @RequestParam(required = false) String publisher) {
+    return ResponseEntity.ok(bookService.findBooksByCriteria(title, authors, genre, publisher));
   }
 
   @PostMapping

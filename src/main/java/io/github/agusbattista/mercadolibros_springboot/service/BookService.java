@@ -10,6 +10,8 @@ public interface BookService {
 
   Optional<Book> findByIsbn(String isbn);
 
+  List<Book> findBooksByCriteria(String title, String authors, String genre, String publisher);
+
   Book save(Book book);
 
   void deleteByIsbn(String isbn);

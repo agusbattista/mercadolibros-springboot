@@ -29,6 +29,12 @@ public class BookServiceImpl implements BookService {
   }
 
   @Override
+  public List<Book> findBooksByCriteria(
+      String title, String authors, String genre, String publisher) {
+    return bookRepository.findBooksByCriteria(title, authors, genre, publisher);
+  }
+
+  @Override
   public Book save(Book book) {
     return bookRepository.save(book);
   }
@@ -55,6 +61,8 @@ public class BookServiceImpl implements BookService {
               existingBook.setPrice(book.getPrice());
               existingBook.setDescription(book.getDescription());
               existingBook.setPublisher(book.getPublisher());
+              existingBook.setGenre(book.getGenre());
+              existingBook.setImageUrl(book.getImageUrl());
               return this.save(existingBook);
             })
         .orElseThrow(() -> new ResourceNotFoundException(this.isbnNotFound(isbn)));
