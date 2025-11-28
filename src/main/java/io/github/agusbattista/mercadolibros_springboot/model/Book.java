@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import org.hibernate.validator.constraints.URL;
 
 @Entity
 @Table(name = "books")
@@ -18,11 +19,12 @@ public class Book {
   private String isbn;
 
   @NotBlank private String title;
-  // reemplazar authors por lista de autores (entidad)
   private String authors;
   @Positive private double price;
   private String description;
   private String publisher;
+  private String genre;
+  @URL private String imageUrl;
 
   public Book() {}
 
@@ -32,13 +34,17 @@ public class Book {
       String authors,
       double price,
       String description,
-      String publisher) {
+      String publisher,
+      String genre,
+      String imageUrl) {
     this.isbn = isbn;
     this.title = title;
     this.authors = authors;
     this.price = price;
     this.description = description;
     this.publisher = publisher;
+    this.genre = genre;
+    this.imageUrl = imageUrl;
   }
 
   public String getIsbn() {
@@ -87,5 +93,21 @@ public class Book {
 
   public void setPublisher(String publisher) {
     this.publisher = publisher;
+  }
+
+  public String getGenre() {
+    return genre;
+  }
+
+  public void setGenre(String genre) {
+    this.genre = genre;
+  }
+
+  public String getImageUrl() {
+    return imageUrl;
+  }
+
+  public void setImageUrl(String imageUrl) {
+    this.imageUrl = imageUrl;
   }
 }
