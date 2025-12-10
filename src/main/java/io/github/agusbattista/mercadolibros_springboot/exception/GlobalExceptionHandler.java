@@ -69,7 +69,7 @@ public class GlobalExceptionHandler {
   //Bad Request (400) - Cuerpo de la petición vacío o inválido
   @ExceptionHandler(HttpMessageNotReadableException.class)
   public ResponseEntity<Map<String, Object>> handleMalformedJson(HttpMessageNotReadableException ex) {
-    return buildResponse(HttpStatus.BAD_REQUEST, "El cuerpo de la petición es vacío o inválido");
+    return buildResponse(HttpStatus.BAD_REQUEST, "El cuerpo de la petición está vacío o es inválido");
   }
 
   //Bad Request (400) para errores de validación al querer persistir o Error interno (500)
