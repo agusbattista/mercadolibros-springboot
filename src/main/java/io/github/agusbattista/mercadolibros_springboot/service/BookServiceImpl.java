@@ -4,11 +4,14 @@ import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoun
 import io.github.agusbattista.mercadolibros_springboot.model.Book;
 import io.github.agusbattista.mercadolibros_springboot.repository.BookRepository;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class BookServiceImpl implements BookService {
 
   private final BookRepository bookRepository;
@@ -25,6 +28,7 @@ public class BookServiceImpl implements BookService {
 
   @Override
   public Optional<Book> findByIsbn(String isbn) {
+    Objects.requireNonNull(isbn, "El ISBN no puede ser nulo para realizar la búsqueda");
     return bookRepository.findByIsbn(isbn);
   }
 
@@ -35,11 +39,26 @@ public class BookServiceImpl implements BookService {
   }
 
   @Override
+  @Transactional
   public Book save(Book book) {
+    this.validateBookInput(book);
+    Optional<Book> optionalBook = bookRepository.findByIsbnIncludingDeleted(book.getIsbn());
+    if (optionalBook.isPresent()) {
+      Book existingBook = optionalBook.get();
+      if (!existingBook.isDeleted()) {
+        throw new IllegalArgumentException(
+            "Ya existe un libro activo con el ISBN: " + book.getIsbn());
+      } else {
+        existingBook.setDeleted(false);
+        this.copyData(book, existingBook);
+        return bookRepository.save(existingBook);
+      }
+    }
     return bookRepository.save(book);
   }
 
   @Override
+  @Transactional
   public void deleteByIsbn(String isbn) {
     Book book =
         bookRepository
@@ -51,24 +70,43 @@ public class BookServiceImpl implements BookService {
     bookRepository.delete(book);
   }
 
+  @Transactional
   @Override
   public Book update(String isbn, Book book) {
+    this.validateBookInput(book);
+    if (!isbn.equals(book.getIsbn())) {
+      throw new IllegalArgumentException(
+          "El ISBN de la URL no coincide con el ISBN del cuerpo de la petición");
+    }
     return this.findByIsbn(isbn)
         .map(
             existingBook -> {
-              existingBook.setTitle(book.getTitle());
-              existingBook.setAuthors(book.getAuthors());
-              existingBook.setPrice(book.getPrice());
-              existingBook.setDescription(book.getDescription());
-              existingBook.setPublisher(book.getPublisher());
-              existingBook.setGenre(book.getGenre());
-              existingBook.setImageUrl(book.getImageUrl());
-              return this.save(existingBook);
+              this.copyData(book, existingBook);
+              return bookRepository.save(existingBook);
             })
         .orElseThrow(() -> new ResourceNotFoundException(this.isbnNotFound(isbn)));
   }
 
+  private void copyData(Book source, Book target) {
+    target.setTitle(source.getTitle());
+    target.setAuthors(source.getAuthors());
+    target.setPrice(source.getPrice());
+    target.setDescription(source.getDescription());
+    target.setPublisher(source.getPublisher());
+    target.setGenre(source.getGenre());
+    target.setImageUrl(source.getImageUrl());
+  }
+
   private String isbnNotFound(String isbn) {
-    return "Libro con ISBN: " + isbn + " no encontrado.";
+    return "Libro con ISBN: " + isbn + " no encontrado";
+  }
+
+  private void validateBookInput(Book book) {
+    /*
+    Puede lanzar NullPointerException.
+    Puede servir para indicar errores en desarrollo, si no conviene puede tratarse en GlobalExceptionHandler.
+    */
+    Objects.requireNonNull(book, "El objeto Book no puede ser nulo");
+    Objects.requireNonNull(book.getIsbn(), "El ISBN es obligatorio para operar en el servicio");
   }
 }

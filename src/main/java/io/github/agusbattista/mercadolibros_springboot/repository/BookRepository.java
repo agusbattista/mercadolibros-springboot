@@ -24,4 +24,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
       @Param("authors") String authors,
       @Param("genre") String genre,
       @Param("publisher") String publisher);
+
+  @Query(value = "SELECT * FROM books WHERE isbn = :isbn", nativeQuery = true)
+  Optional<Book> findByIsbnIncludingDeleted(String isbn);
 }

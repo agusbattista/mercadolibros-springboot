@@ -2,6 +2,7 @@ package io.github.agusbattista.mercadolibros_springboot.controller;
 
 import io.github.agusbattista.mercadolibros_springboot.model.Book;
 import io.github.agusbattista.mercadolibros_springboot.service.BookService;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -52,12 +53,12 @@ public class BookController {
   }
 
   @PostMapping
-  public ResponseEntity<Book> save(@RequestBody Book book) {
+  public ResponseEntity<Book> save(@Valid @RequestBody Book book) {
     return ResponseEntity.status(HttpStatus.CREATED).body(bookService.save(book));
   }
 
   @PutMapping("/{isbn}")
-  public ResponseEntity<Book> update(@PathVariable String isbn, @RequestBody Book book) {
+  public ResponseEntity<Book> update(@Valid @PathVariable String isbn, @RequestBody Book book) {
     return ResponseEntity.ok(bookService.update(isbn, book));
   }
 
