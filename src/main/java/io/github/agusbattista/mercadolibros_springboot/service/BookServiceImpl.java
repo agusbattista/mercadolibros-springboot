@@ -50,7 +50,7 @@ public class BookServiceImpl implements BookService {
             "Ya existe un libro activo con el ISBN: " + book.getIsbn());
       } else {
         existingBook.setDeleted(false);
-        this.copyData(book, existingBook);
+        this.copyBookData(book, existingBook);
         return bookRepository.save(existingBook);
       }
     }
@@ -73,21 +73,21 @@ public class BookServiceImpl implements BookService {
   @Transactional
   @Override
   public Book update(String isbn, Book book) {
-    this.validateBookInput(book);
-    if (!isbn.equals(book.getIsbn())) {
-      throw new IllegalArgumentException(
-          "El ISBN de la URL no coincide con el ISBN del cuerpo de la petición");
-    }
+    validateBookNotNull(book);
     return this.findByIsbn(isbn)
         .map(
             existingBook -> {
-              this.copyData(book, existingBook);
+              this.copyBookData(book, existingBook);
               return bookRepository.save(existingBook);
             })
         .orElseThrow(() -> new ResourceNotFoundException(this.isbnNotFound(isbn)));
   }
 
-  private void copyData(Book source, Book target) {
+  private void validateBookNotNull(Book book) {
+    Objects.requireNonNull(book, "El objeto Book no puede ser nulo");
+  }
+
+  private void copyBookData(Book source, Book target) {
     target.setTitle(source.getTitle());
     target.setAuthors(source.getAuthors());
     target.setPrice(source.getPrice());
@@ -106,7 +106,11 @@ public class BookServiceImpl implements BookService {
     Puede lanzar NullPointerException.
     Puede servir para indicar errores en desarrollo, si no conviene puede tratarse en GlobalExceptionHandler.
     */
-    Objects.requireNonNull(book, "El objeto Book no puede ser nulo");
-    Objects.requireNonNull(book.getIsbn(), "El ISBN es obligatorio para operar en el servicio");
+    validateBookNotNull(book);
+    validateIsbnNotNull(book.getIsbn());
+  }
+
+  private void validateIsbnNotNull(String isbn) {
+    Objects.requireNonNull(isbn, "El ISBN es obligatorio para operar en el servicio");
   }
 }
