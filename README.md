@@ -40,7 +40,7 @@ Este repositorio contiene una API REST hecha con Spring Boot que provee un CRUD 
 La API estará disponible en:
 <http://localhost:8080/api/books>
 
-phpMyAdmin estará disponible en:
+El panel phpMyAdmin estará disponible en:
 <http://localhost:8081/>
 - Usuario: `root`
 - Contraseña: `root`
@@ -58,7 +58,7 @@ phpMyAdmin estará disponible en:
   - **Ejemplos:**
     - `/api/books/search?title=eternauta` - Libros cuyo título contenga "eternauta"
     - `/api/books/search?authors=poe&genre=terror` - Libros de "poe" del género "terror"
-    - `/api/books/search` - Sin parámetros, devuelve todos los libros
+    - `/api/books/search` - Sin parámetros devuelve todos los libros
 - `POST /api/books` - Crear un libro
 - `PUT /api/books/{isbn}` - Actualizar un libro
 - `DELETE /api/books/{isbn}` - Eliminar un libro
@@ -73,3 +73,23 @@ phpMyAdmin estará disponible en:
 # Detener Docker Compose y eliminar volúmenes (limpieza completa de los datos)
   docker-compose down -v
 ```
+
+### Formato de un libro (ejemplo)
+```JSON
+{
+  "isbn": "9788466357562",
+  "title": "1984",
+  "authors": "George Orwell",
+  "price": 8.99,
+  "description": "La novela distópica más famosa sobre el totalitarismo y la vigilancia masiva.",
+  "publisher": "Debolsillo",
+  "genre": "Ficción",
+  "imageUrl": "https://books.google.com/books/publisher/content?id=H8Y1EQAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api"
+}
+```
+
+### Sobre el proyecto
+> [!IMPORTANT]
+> Este proyecto está en su primera versión. 
+> 
+> Se pretende comenzar por lo más básico para luego poder iterar sobre ello, construyendo nuevas funcionalidades y mejorando las existentes.
