@@ -44,27 +44,28 @@ public class BookServiceImpl implements BookService {
 
   @Override
   @Transactional
-  public BookResponseDTO save(BookRequestDTO book) {
-    Book requestBook = bookMapper.toEntity(book);
-    this.validateBookInput(requestBook);
-    Optional<Book> optionalBook = bookRepository.findByIsbnIncludingDeleted(requestBook.getIsbn());
+  public BookResponseDTO save(BookRequestDTO requestBook) {
+    Objects.requireNonNull(requestBook, "El libro que quiere guardar no puede ser nulo");
+    Optional<Book> optionalBook = bookRepository.findByIsbnIncludingDeleted(requestBook.isbn());
     if (optionalBook.isPresent()) {
       Book existingBook = optionalBook.get();
       if (!existingBook.isDeleted()) {
         throw new IllegalArgumentException(
-            "Ya existe un libro activo con el ISBN: " + requestBook.getIsbn());
+            "Ya existe un libro activo con el ISBN: " + requestBook.isbn());
       } else {
         existingBook.setDeleted(false);
-        this.copyBookData(requestBook, existingBook);
+        bookMapper.updateEntityFromRequest(requestBook, existingBook);
         return bookMapper.toResponse(bookRepository.save(existingBook));
       }
     }
-    return bookMapper.toResponse(bookRepository.save(requestBook));
+    Book newBook = bookMapper.toEntity(requestBook);
+    return bookMapper.toResponse(bookRepository.save(newBook));
   }
 
   @Override
   @Transactional
   public void deleteByIsbn(String isbn) {
+    Objects.requireNonNull(isbn, "El ISBN no puede ser nulo para realizar la búsqueda");
     Book book =
         bookRepository
             .findByIsbn(isbn)
@@ -77,47 +78,19 @@ public class BookServiceImpl implements BookService {
 
   @Transactional
   @Override
-  public BookResponseDTO update(String isbn, BookRequestDTO book) {
-    Book requestBook = bookMapper.toEntity(book);
-    validateBookNotNull(requestBook);
-    return bookRepository
-        .findByIsbn(isbn)
-        .map(
-            existingBook -> {
-              this.copyBookData(requestBook, existingBook);
-              return bookMapper.toResponse(bookRepository.save(existingBook));
-            })
-        .orElseThrow(() -> new ResourceNotFoundException(this.isbnNotFound(isbn)));
-  }
-
-  private void validateBookNotNull(Book book) {
-    Objects.requireNonNull(book, "El objeto Book no puede ser nulo");
-  }
-
-  private void copyBookData(Book source, Book target) {
-    target.setTitle(source.getTitle());
-    target.setAuthors(source.getAuthors());
-    target.setPrice(source.getPrice());
-    target.setDescription(source.getDescription());
-    target.setPublisher(source.getPublisher());
-    target.setGenre(source.getGenre());
-    target.setImageUrl(source.getImageUrl());
+  public BookResponseDTO update(String isbn, BookRequestDTO requestBook) {
+    Objects.requireNonNull(isbn, "El ISBN no puede ser nulo");
+    Objects.requireNonNull(
+        requestBook, "Los datos del libro que quiere actualizar no pueden ser nulos");
+    Book existingBook =
+        bookRepository
+            .findByIsbn(isbn)
+            .orElseThrow(() -> new ResourceNotFoundException(this.isbnNotFound(isbn)));
+    bookMapper.updateEntityFromRequest(requestBook, existingBook);
+    return bookMapper.toResponse(bookRepository.save(existingBook));
   }
 
   private String isbnNotFound(String isbn) {
     return "Libro con ISBN: " + isbn + " no encontrado";
-  }
-
-  private void validateBookInput(Book book) {
-    /*
-    Puede lanzar NullPointerException.
-    Puede servir para indicar errores en desarrollo, si no conviene puede tratarse en GlobalExceptionHandler.
-    */
-    validateBookNotNull(book);
-    validateIsbnNotNull(book.getIsbn());
-  }
-
-  private void validateIsbnNotNull(String isbn) {
-    Objects.requireNonNull(isbn, "El ISBN es obligatorio para operar en el servicio");
   }
 }

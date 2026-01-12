@@ -58,7 +58,11 @@ public class BookController {
 
   @PutMapping("/{isbn}")
   public ResponseEntity<BookResponseDTO> update(
-      @Valid @PathVariable String isbn, @RequestBody BookRequestDTO book) {
+      @PathVariable String isbn, @Valid @RequestBody BookRequestDTO book) {
+    if (!isbn.equals(book.isbn())) {
+      throw new IllegalArgumentException(
+          "El ISBN de la URL no coincide con el del cuerpo de la petición. No se permite modificar el ISBN");
+    }
     return ResponseEntity.ok(bookService.update(isbn, book));
   }
 

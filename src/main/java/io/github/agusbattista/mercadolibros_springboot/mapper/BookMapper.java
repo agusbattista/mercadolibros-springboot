@@ -11,7 +11,6 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface BookMapper {
 
-  // id y deleted se generan en la BDD
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "deleted", ignore = true)
   Book toEntity(BookRequestDTO request);
@@ -20,10 +19,6 @@ public interface BookMapper {
 
   List<BookResponseDTO> toResponseList(List<Book> books);
 
-  // PARA ACTUALIZAR ==> REVISAR
-  // 1. Ignoramos 'id' para que no intente sobrescribirlo (aunque el DTO no lo tenga, es buena
-  // práctica).
-  // 2. Ignoramos 'deleted' para que una actualización normal no pueda "revivir" o borrar un libro.
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "deleted", ignore = true)
   void updateEntityFromRequest(BookRequestDTO request, @MappingTarget Book entity);
