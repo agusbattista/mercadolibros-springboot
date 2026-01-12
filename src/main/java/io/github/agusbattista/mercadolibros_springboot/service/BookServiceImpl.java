@@ -1,12 +1,14 @@
 package io.github.agusbattista.mercadolibros_springboot.service;
 
+import io.github.agusbattista.mercadolibros_springboot.dto.BookRequestDTO;
+import io.github.agusbattista.mercadolibros_springboot.dto.BookResponseDTO;
 import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoundException;
+import io.github.agusbattista.mercadolibros_springboot.mapper.BookMapper;
 import io.github.agusbattista.mercadolibros_springboot.model.Book;
 import io.github.agusbattista.mercadolibros_springboot.repository.BookRepository;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,46 +17,49 @@ import org.springframework.transaction.annotation.Transactional;
 public class BookServiceImpl implements BookService {
 
   private final BookRepository bookRepository;
+  private final BookMapper bookMapper;
 
-  @Autowired
-  public BookServiceImpl(BookRepository bookRepository) {
+  public BookServiceImpl(BookRepository bookRepository, BookMapper bookMapper) {
     this.bookRepository = bookRepository;
+    this.bookMapper = bookMapper;
   }
 
   @Override
-  public List<Book> findAll() {
-    return bookRepository.findAll();
+  public List<BookResponseDTO> findAll() {
+    return bookMapper.toResponseList(bookRepository.findAll());
   }
 
   @Override
-  public Optional<Book> findByIsbn(String isbn) {
+  public Optional<BookResponseDTO> findByIsbn(String isbn) {
     Objects.requireNonNull(isbn, "El ISBN no puede ser nulo para realizar la búsqueda");
-    return bookRepository.findByIsbn(isbn);
+    return bookRepository.findByIsbn(isbn).map(bookMapper::toResponse);
   }
 
   @Override
-  public List<Book> findBooksByCriteria(
+  public List<BookResponseDTO> findBooksByCriteria(
       String title, String authors, String genre, String publisher) {
-    return bookRepository.findBooksByCriteria(title, authors, genre, publisher);
+    return bookMapper.toResponseList(
+        bookRepository.findBooksByCriteria(title, authors, genre, publisher));
   }
 
   @Override
   @Transactional
-  public Book save(Book book) {
-    this.validateBookInput(book);
-    Optional<Book> optionalBook = bookRepository.findByIsbnIncludingDeleted(book.getIsbn());
+  public BookResponseDTO save(BookRequestDTO book) {
+    Book requestBook = bookMapper.toEntity(book);
+    this.validateBookInput(requestBook);
+    Optional<Book> optionalBook = bookRepository.findByIsbnIncludingDeleted(requestBook.getIsbn());
     if (optionalBook.isPresent()) {
       Book existingBook = optionalBook.get();
       if (!existingBook.isDeleted()) {
         throw new IllegalArgumentException(
-            "Ya existe un libro activo con el ISBN: " + book.getIsbn());
+            "Ya existe un libro activo con el ISBN: " + requestBook.getIsbn());
       } else {
         existingBook.setDeleted(false);
-        this.copyBookData(book, existingBook);
-        return bookRepository.save(existingBook);
+        this.copyBookData(requestBook, existingBook);
+        return bookMapper.toResponse(bookRepository.save(existingBook));
       }
     }
-    return bookRepository.save(book);
+    return bookMapper.toResponse(bookRepository.save(requestBook));
   }
 
   @Override
@@ -72,13 +77,15 @@ public class BookServiceImpl implements BookService {
 
   @Transactional
   @Override
-  public Book update(String isbn, Book book) {
-    validateBookNotNull(book);
-    return this.findByIsbn(isbn)
+  public BookResponseDTO update(String isbn, BookRequestDTO book) {
+    Book requestBook = bookMapper.toEntity(book);
+    validateBookNotNull(requestBook);
+    return bookRepository
+        .findByIsbn(isbn)
         .map(
             existingBook -> {
-              this.copyBookData(book, existingBook);
-              return bookRepository.save(existingBook);
+              this.copyBookData(requestBook, existingBook);
+              return bookMapper.toResponse(bookRepository.save(existingBook));
             })
         .orElseThrow(() -> new ResourceNotFoundException(this.isbnNotFound(isbn)));
   }

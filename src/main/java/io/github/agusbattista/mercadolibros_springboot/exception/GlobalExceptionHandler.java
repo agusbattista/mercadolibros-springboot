@@ -66,19 +66,23 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(status).body(error);
   }
 
-  //Bad Request (400) - Cuerpo de la petición vacío o inválido
+  // Bad Request (400) - Cuerpo de la petición vacío o inválido
   @ExceptionHandler(HttpMessageNotReadableException.class)
-  public ResponseEntity<Map<String, Object>> handleMalformedJson(HttpMessageNotReadableException ex) {
-    return buildResponse(HttpStatus.BAD_REQUEST, "El cuerpo de la petición está vacío o es inválido");
+  public ResponseEntity<Map<String, Object>> handleMalformedJson(
+      HttpMessageNotReadableException ex) {
+    return buildResponse(
+        HttpStatus.BAD_REQUEST, "El cuerpo de la petición está vacío o es inválido");
   }
 
-  //Bad Request (400) para errores de validación al querer persistir o Error interno (500)
+  // Bad Request (400) para errores de validación al querer persistir o Error interno (500)
   @ExceptionHandler(TransactionSystemException.class)
-  public ResponseEntity<Map<String, Object>> handleTransactionException(TransactionSystemException ex) {
+  public ResponseEntity<Map<String, Object>> handleTransactionException(
+      TransactionSystemException ex) {
     Throwable rootCause = ex.getRootCause();
 
     if (rootCause instanceof ConstraintViolationException) {
-      ConstraintViolationException constraintViolationException = (ConstraintViolationException) rootCause;
+      ConstraintViolationException constraintViolationException =
+          (ConstraintViolationException) rootCause;
 
       Map<String, Object> errorResponse = new HashMap<>();
       errorResponse.put("timestamp", LocalDateTime.now());
@@ -86,12 +90,11 @@ public class GlobalExceptionHandler {
       errorResponse.put("error", "Validation Error");
 
       Map<String, List<String>> fieldErrors = new HashMap<>();
-      for (ConstraintViolation<?> violation : constraintViolationException.getConstraintViolations()) {
+      for (ConstraintViolation<?> violation :
+          constraintViolationException.getConstraintViolations()) {
         String field = violation.getPropertyPath().toString();
         String message = violation.getMessage();
-        fieldErrors
-            .computeIfAbsent(field, key -> new ArrayList<>())
-            .add(message);
+        fieldErrors.computeIfAbsent(field, key -> new ArrayList<>()).add(message);
       }
 
       errorResponse.put("message", "Error al validar los datos");
