@@ -30,7 +30,10 @@ public record BookRequestDTO(
             message = "El precio debe tener formato monetario correcto. Ejemplo: 100.00")
         BigDecimal price,
     @NotBlank(message = "La descripción es obligatoria")
-        @Size(max = 5000, message = "La descripción no puede superar los 5000 caracteres")
+        @Size(
+            min = 20,
+            max = 5000,
+            message = "La descripción debe tener entre 20 y 5000 caracteres")
         String description,
     @NotBlank(message = "La editorial es obligatoria")
         @Size(max = 255, message = "La editorial no puede superar los 255 caracteres")
