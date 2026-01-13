@@ -1,10 +1,10 @@
 package io.github.agusbattista.mercadolibros_springboot.controller;
 
-import io.github.agusbattista.mercadolibros_springboot.model.Book;
+import io.github.agusbattista.mercadolibros_springboot.dto.BookRequestDTO;
+import io.github.agusbattista.mercadolibros_springboot.dto.BookResponseDTO;
 import io.github.agusbattista.mercadolibros_springboot.service.BookService;
 import jakarta.validation.Valid;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -25,18 +25,17 @@ public class BookController {
 
   private final BookService bookService;
 
-  @Autowired
   public BookController(BookService bookService) {
     this.bookService = bookService;
   }
 
   @GetMapping
-  public ResponseEntity<List<Book>> findAll() {
+  public ResponseEntity<List<BookResponseDTO>> findAll() {
     return ResponseEntity.ok(bookService.findAll());
   }
 
   @GetMapping("/{isbn}")
-  public ResponseEntity<Book> getBookByIsbn(@PathVariable String isbn) {
+  public ResponseEntity<BookResponseDTO> getBookByIsbn(@PathVariable String isbn) {
     return bookService
         .findByIsbn(isbn)
         .map(ResponseEntity::ok)
@@ -44,7 +43,7 @@ public class BookController {
   }
 
   @GetMapping("/search")
-  public ResponseEntity<List<Book>> findBooksByCriteria(
+  public ResponseEntity<List<BookResponseDTO>> findBooksByCriteria(
       @RequestParam(required = false) String title,
       @RequestParam(required = false) String authors,
       @RequestParam(required = false) String genre,
@@ -53,12 +52,17 @@ public class BookController {
   }
 
   @PostMapping
-  public ResponseEntity<Book> save(@Valid @RequestBody Book book) {
+  public ResponseEntity<BookResponseDTO> save(@Valid @RequestBody BookRequestDTO book) {
     return ResponseEntity.status(HttpStatus.CREATED).body(bookService.save(book));
   }
 
   @PutMapping("/{isbn}")
-  public ResponseEntity<Book> update(@Valid @PathVariable String isbn, @RequestBody Book book) {
+  public ResponseEntity<BookResponseDTO> update(
+      @PathVariable String isbn, @Valid @RequestBody BookRequestDTO book) {
+    if (!isbn.equals(book.isbn())) {
+      throw new IllegalArgumentException(
+          "El ISBN de la URL no coincide con el del cuerpo de la petición. No se permite modificar el ISBN");
+    }
     return ResponseEntity.ok(bookService.update(isbn, book));
   }
 

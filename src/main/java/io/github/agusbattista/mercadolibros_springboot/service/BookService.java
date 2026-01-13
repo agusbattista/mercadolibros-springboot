@@ -1,20 +1,22 @@
 package io.github.agusbattista.mercadolibros_springboot.service;
 
-import io.github.agusbattista.mercadolibros_springboot.model.Book;
+import io.github.agusbattista.mercadolibros_springboot.dto.BookRequestDTO;
+import io.github.agusbattista.mercadolibros_springboot.dto.BookResponseDTO;
 import java.util.List;
 import java.util.Optional;
 
 public interface BookService {
 
-  List<Book> findAll();
+  List<BookResponseDTO> findAll();
 
-  Optional<Book> findByIsbn(String isbn);
+  Optional<BookResponseDTO> findByIsbn(String isbn);
 
-  List<Book> findBooksByCriteria(String title, String authors, String genre, String publisher);
+  List<BookResponseDTO> findBooksByCriteria(
+      String title, String authors, String genre, String publisher);
 
-  Book save(Book book);
+  BookResponseDTO save(BookRequestDTO book);
 
   void deleteByIsbn(String isbn);
 
-  Book update(String isbn, Book book);
+  BookResponseDTO update(String isbn, BookRequestDTO book);
 }
