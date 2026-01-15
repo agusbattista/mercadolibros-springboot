@@ -1,6 +1,5 @@
 package io.github.agusbattista.mercadolibros_springboot.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import org.hibernate.annotations.SQLDelete;
@@ -35,7 +34,7 @@ public class Book {
   @Column(nullable = false, precision = 10, scale = 2)
   private BigDecimal price;
 
-  @Column(columnDefinition = "TEXT")
+  @Column(nullable = false, columnDefinition = "TEXT")
   private String description;
 
   @Column(nullable = false, length = 255)
@@ -48,7 +47,7 @@ public class Book {
   private String imageUrl;
 
   public Book() {
-    /* Jackson necesita el constructor vacío */
+    /* Requerido por JPA/Hibernate */
   }
 
   public Long getId() {
@@ -123,7 +122,6 @@ public class Book {
     this.imageUrl = imageUrl;
   }
 
-  @JsonIgnore
   public boolean isDeleted() {
     return deleted;
   }
