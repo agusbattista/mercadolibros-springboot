@@ -24,25 +24,36 @@ public class GlobalExceptionHandler {
     return this.buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
   }
 
-  // Conflico / Duplicado (409)
-  @ExceptionHandler(IllegalArgumentException.class)
-  public ResponseEntity<Map<String, Object>> handleConflict(IllegalArgumentException ex) {
+  // Duplicado (409)
+  @ExceptionHandler(DuplicateResourceException.class)
+  public ResponseEntity<Map<String, Object>> handleDuplicateResource(
+      DuplicateResourceException ex) {
     return this.buildResponse(HttpStatus.CONFLICT, ex.getMessage());
   }
 
+  // Argumentos ilegales (400)
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
+    return this.buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+  }
+
+  // Bad Request (400) - Cuerpo de la petición vacío o inválido
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<Map<String, Object>> handleMalformedJson(
+      HttpMessageNotReadableException ex) {
+    return buildResponse(
+        HttpStatus.BAD_REQUEST, "El cuerpo de la petición está vacío o es inválido");
+  }
+
   /*
-    Error de validación - @Valid (400)
-    Extrae campo por campo que falló. (Ejemplo: "price": debe ser mayor a cero")
-    Los fallos de cada campo se agrupan en un array
-  */
+   * Error de validación (400) - @Valid en el controller.
+   * Extrae campo por campo que falló.
+   * Ejemplo: "price: debe ser mayor a cero".
+   * Los fallos de cada campo se agrupan en un array.
+   */
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<Map<String, Object>> handleValidationErrors(
       MethodArgumentNotValidException ex) {
-    Map<String, Object> errorResponse = new HashMap<>();
-    errorResponse.put("timestamp", LocalDateTime.now());
-    errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
-    errorResponse.put("error", "Validation Error");
-
     Map<String, List<String>> fieldErrors = new HashMap<>();
     ex.getBindingResult()
         .getFieldErrors()
@@ -51,10 +62,33 @@ public class GlobalExceptionHandler {
                 fieldErrors
                     .computeIfAbsent(error.getField(), key -> new ArrayList<>())
                     .add(error.getDefaultMessage()));
+    return buildValidationResponse(fieldErrors);
+  }
 
-    errorResponse.put("message", "La validación de datos falló");
-    errorResponse.put("errors", fieldErrors);
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+  // Bad Request (400) para errores de validación al querer persistir o Error interno (500)
+  @ExceptionHandler(TransactionSystemException.class)
+  public ResponseEntity<Map<String, Object>> handleTransactionException(
+      TransactionSystemException ex) {
+    Throwable rootCause = ex.getRootCause();
+    if (rootCause instanceof ConstraintViolationException constraintViolationException) {
+      Map<String, List<String>> fieldErrors = new HashMap<>();
+      for (ConstraintViolation<?> violation :
+          constraintViolationException.getConstraintViolations()) {
+        String field = violation.getPropertyPath().toString();
+        String message = violation.getMessage();
+        fieldErrors.computeIfAbsent(field, key -> new ArrayList<>()).add(message);
+      }
+      return buildValidationResponse(fieldErrors);
+    }
+    return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno de transacción");
+  }
+
+  // Error global (500)
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<Map<String, Object>> handleGlobalException(Exception ex) {
+    return buildResponse(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Ocurrió un error interno inesperado. Por favor contacte al soporte");
   }
 
   private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {
@@ -66,42 +100,14 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(status).body(error);
   }
 
-  // Bad Request (400) - Cuerpo de la petición vacío o inválido
-  @ExceptionHandler(HttpMessageNotReadableException.class)
-  public ResponseEntity<Map<String, Object>> handleMalformedJson(
-      HttpMessageNotReadableException ex) {
-    return buildResponse(
-        HttpStatus.BAD_REQUEST, "El cuerpo de la petición está vacío o es inválido");
-  }
-
-  // Bad Request (400) para errores de validación al querer persistir o Error interno (500)
-  @ExceptionHandler(TransactionSystemException.class)
-  public ResponseEntity<Map<String, Object>> handleTransactionException(
-      TransactionSystemException ex) {
-    Throwable rootCause = ex.getRootCause();
-
-    if (rootCause instanceof ConstraintViolationException) {
-      ConstraintViolationException constraintViolationException =
-          (ConstraintViolationException) rootCause;
-
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("timestamp", LocalDateTime.now());
-      errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
-      errorResponse.put("error", "Validation Error");
-
-      Map<String, List<String>> fieldErrors = new HashMap<>();
-      for (ConstraintViolation<?> violation :
-          constraintViolationException.getConstraintViolations()) {
-        String field = violation.getPropertyPath().toString();
-        String message = violation.getMessage();
-        fieldErrors.computeIfAbsent(field, key -> new ArrayList<>()).add(message);
-      }
-
-      errorResponse.put("message", "Error al validar los datos");
-      errorResponse.put("errors", fieldErrors);
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
-
-    return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno de transacción");
+  private ResponseEntity<Map<String, Object>> buildValidationResponse(
+      Map<String, List<String>> fieldErrors) {
+    Map<String, Object> errorResponse = new HashMap<>();
+    errorResponse.put("timestamp", LocalDateTime.now());
+    errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
+    errorResponse.put("error", "Validation error");
+    errorResponse.put("message", "La validación de datos falló");
+    errorResponse.put("errors", fieldErrors);
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
   }
 }
