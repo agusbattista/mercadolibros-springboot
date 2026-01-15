@@ -2,6 +2,7 @@ package io.github.agusbattista.mercadolibros_springboot.service;
 
 import io.github.agusbattista.mercadolibros_springboot.dto.BookRequestDTO;
 import io.github.agusbattista.mercadolibros_springboot.dto.BookResponseDTO;
+import io.github.agusbattista.mercadolibros_springboot.exception.DuplicateResourceException;
 import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoundException;
 import io.github.agusbattista.mercadolibros_springboot.mapper.BookMapper;
 import io.github.agusbattista.mercadolibros_springboot.model.Book;
@@ -50,7 +51,7 @@ public class BookServiceImpl implements BookService {
     if (optionalBook.isPresent()) {
       Book existingBook = optionalBook.get();
       if (!existingBook.isDeleted()) {
-        throw new IllegalArgumentException(
+        throw new DuplicateResourceException(
             "Ya existe un libro activo con el ISBN: " + requestBook.isbn());
       } else {
         existingBook.setDeleted(false);
@@ -65,7 +66,7 @@ public class BookServiceImpl implements BookService {
   @Override
   @Transactional
   public void deleteByIsbn(String isbn) {
-    Objects.requireNonNull(isbn, "El ISBN no puede ser nulo para realizar la búsqueda");
+    Objects.requireNonNull(isbn, "El ISBN no puede ser nulo para intentar la eliminación");
     Book book =
         bookRepository
             .findByIsbn(isbn)
@@ -82,6 +83,10 @@ public class BookServiceImpl implements BookService {
     Objects.requireNonNull(isbn, "El ISBN no puede ser nulo");
     Objects.requireNonNull(
         requestBook, "Los datos del libro que quiere actualizar no pueden ser nulos");
+    if (!isbn.equals(requestBook.isbn())) {
+      throw new IllegalArgumentException(
+          "El ISBN proporcionado no coincide con el del libro que quiere actualizar. No se permite modificar el ISBN");
+    }
     Book existingBook =
         bookRepository
             .findByIsbn(isbn)

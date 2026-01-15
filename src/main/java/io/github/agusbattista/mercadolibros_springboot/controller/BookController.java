@@ -2,6 +2,7 @@ package io.github.agusbattista.mercadolibros_springboot.controller;
 
 import io.github.agusbattista.mercadolibros_springboot.dto.BookRequestDTO;
 import io.github.agusbattista.mercadolibros_springboot.dto.BookResponseDTO;
+import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoundException;
 import io.github.agusbattista.mercadolibros_springboot.service.BookService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -36,10 +37,12 @@ public class BookController {
 
   @GetMapping("/{isbn}")
   public ResponseEntity<BookResponseDTO> getBookByIsbn(@PathVariable String isbn) {
-    return bookService
-        .findByIsbn(isbn)
-        .map(ResponseEntity::ok)
-        .orElse(ResponseEntity.notFound().build());
+    BookResponseDTO book =
+        bookService
+            .findByIsbn(isbn)
+            .orElseThrow(
+                () -> new ResourceNotFoundException("Libro con ISBN: " + isbn + " no encontrado"));
+    return ResponseEntity.ok(book);
   }
 
   @GetMapping("/search")
@@ -59,10 +62,6 @@ public class BookController {
   @PutMapping("/{isbn}")
   public ResponseEntity<BookResponseDTO> update(
       @PathVariable String isbn, @Valid @RequestBody BookRequestDTO book) {
-    if (!isbn.equals(book.isbn())) {
-      throw new IllegalArgumentException(
-          "El ISBN de la URL no coincide con el del cuerpo de la petición. No se permite modificar el ISBN");
-    }
     return ResponseEntity.ok(bookService.update(isbn, book));
   }
 
