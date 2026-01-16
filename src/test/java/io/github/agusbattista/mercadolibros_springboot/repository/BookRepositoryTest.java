@@ -161,7 +161,7 @@ class BookRepositoryTest {
   }
 
   @Test
-  void findByIsbnIncludingDeleted_WhenBookNotExists_ShouldReturnEmpty() {
+  void findByIsbnIncludingDeleted_WhenBookNotExists_ShouldReturnEmptyOptional() {
     Optional<Book> found = bookRepository.findByIsbnIncludingDeleted("0000000000000");
     assertThat(found).isEmpty();
   }
