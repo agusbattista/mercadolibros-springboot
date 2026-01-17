@@ -18,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.agusbattista.mercadolibros_springboot.dto.BookRequestDTO;
 import io.github.agusbattista.mercadolibros_springboot.dto.BookResponseDTO;
+import io.github.agusbattista.mercadolibros_springboot.exception.DuplicateResourceException;
 import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoundException;
 import io.github.agusbattista.mercadolibros_springboot.service.BookService;
 import java.math.BigDecimal;
@@ -99,6 +100,19 @@ class BookControllerTest {
   }
 
   @Test
+  void findAll_WhenUnexpectedErrorOccurs_ShouldReturnInternalServerError() throws Exception {
+    when(bookService.findAll()).thenThrow(new RuntimeException("DB crashed"));
+
+    mockMvc
+        .perform(get(BASE_URL))
+        .andExpect(status().isInternalServerError())
+        .andExpect(jsonPath("$.status").value(500))
+        .andExpect(jsonPath("$.message").exists());
+
+    verify(bookService).findAll();
+  }
+
+  @Test
   void findByIsbn_WhenIsbnExists_ShouldReturnBook() throws Exception {
     String isbn = bookRequest.isbn();
     String url = BASE_URL + "/" + isbn;
@@ -172,7 +186,37 @@ class BookControllerTest {
 
     mockMvc
         .perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors").exists());
+
+    verify(bookService, times(0)).save(any());
+  }
+
+  @Test
+  void save_WhenBookAlreadyExists_ShouldReturnConflict() throws Exception {
+    String requestBody = objectMapper.writeValueAsString(bookRequest);
+    doThrow(new DuplicateResourceException("Libro duplicado"))
+        .when(bookService)
+        .save(any(BookRequestDTO.class));
+
+    mockMvc
+        .perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.status").value(409))
+        .andExpect(jsonPath("$.message").exists());
+
+    verify(bookService).save(any(BookRequestDTO.class));
+  }
+
+  @Test
+  void save_WhenMalformedJson_ShouldReturnBadRequest() throws Exception {
+    String invalidJson = "{ isbn: ";
+
+    mockMvc
+        .perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(invalidJson))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.message").exists());
 
     verify(bookService, times(0)).save(any());
   }
