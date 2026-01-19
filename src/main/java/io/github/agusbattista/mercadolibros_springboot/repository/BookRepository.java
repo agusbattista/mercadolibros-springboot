@@ -27,4 +27,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
   @Query(value = "SELECT * FROM books WHERE isbn = :isbn", nativeQuery = true)
   Optional<Book> findByIsbnIncludingDeleted(String isbn);
+
+  @Query(value = "SELECT COUNT(*) FROM books", nativeQuery = true)
+  long countAllIncludingDeleted();
 }
