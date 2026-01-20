@@ -165,4 +165,36 @@ class BookRepositoryTest {
     Optional<Book> found = bookRepository.findByIsbnIncludingDeleted("0000000000000");
     assertThat(found).isEmpty();
   }
+
+  @Test
+  void countAllIncludingDeleted_WhenNotExistsDeletedBooks_ShouldReturnThree() {
+    assertThat(bookRepository.countAllIncludingDeleted()).isEqualTo(3);
+  }
+
+  @Test
+  void countAllIncludingDeleted_WhenOneBookIsSoftDeleted_ShouldStillReturnThree() {
+    book3.setDeleted(true);
+    bookRepository.save(book3);
+    entityManager.flush();
+
+    assertThat(bookRepository.countAllIncludingDeleted()).isEqualTo(3);
+  }
+
+  @Test
+  void count_WhenOneBookIsSoftDeleted_ShouldReturnTwo() {
+    book3.setDeleted(true);
+    bookRepository.save(book3);
+    entityManager.flush();
+    entityManager.clear();
+
+    assertThat(bookRepository.count()).isEqualTo(2);
+  }
+
+  @Test
+  void countAllIncludingDeleted_WhenDatabaseIsEmpty_ShouldReturnZero() {
+    entityManager.getEntityManager().createQuery("DELETE FROM Book").executeUpdate();
+    entityManager.flush();
+
+    assertThat(bookRepository.countAllIncludingDeleted()).isZero();
+  }
 }

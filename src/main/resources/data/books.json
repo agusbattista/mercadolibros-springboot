@@ -1,0 +1,102 @@
+[
+  {
+    "isbn": "9780134757599",
+    "title": "Refactoring",
+    "authors": "Martin Fowler",
+    "price": 57.99,
+    "description": "Una guía definitiva sobre cómo mejorar el diseño del código existente sin cambiar su comportamiento externo.",
+    "publisher": "Addison-Wesley Professional",
+    "genre": "Tecnología",
+    "imageUrl": "https://books.google.com/books/publisher/content?id=2H1_DwAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api"
+  },
+  {
+    "isbn": "9780201633610",
+    "title": "Design Patterns",
+    "authors": "Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides",
+    "price": 54.99,
+    "description": "El libro clásico que introdujo los patrones de diseño en la ingeniería de software.",
+    "publisher": "Addison-Wesley Professional",
+    "genre": "Tecnología",
+    "imageUrl": "https://books.google.com/books/content?id=6oHuKQe3TjQC&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api"
+  },
+  {
+    "isbn": "9780321247148",
+    "title": "Design Patterns Explained",
+    "authors": "Alan Shalloway, James R. Trott",
+    "price": 49.99,
+    "description": "Una nueva perspectiva sobre el diseño orientado a objetos y los patrones de diseño.",
+    "publisher": "Addison-Wesley Professional",
+    "genre": "Tecnología",
+    "imageUrl": "https://books.google.com/books/content?id=84Whswqz4rAC&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api"
+  },
+  {
+    "isbn": "9786073155731",
+    "title": "Canción de Hielo y Fuego (Colección)",
+    "authors": "George R. R. Martin",
+    "price": 33.99,
+    "description": "La saga completa de Canción de Hielo y Fuego, la obra maestra de la fantasía moderna.",
+    "publisher": "Plaza & Janés",
+    "genre": "Fantasía",
+    "imageUrl": "https://books.google.com/books/publisher/content?id=krMsDwAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api"
+  },
+  {
+    "isbn": "9788445073728",
+    "title": "La Comunidad del Anillo",
+    "authors": "J. R. R. Tolkien",
+    "price": 12.99,
+    "description": "La primera parte de la historia de la Guerra del Anillo.",
+    "publisher": "Minotauro",
+    "genre": "Fantasía",
+    "imageUrl": "https://books.google.com/books/content?id=DYmUGGwZ8_oC&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api"
+  },
+  {
+    "isbn": "9788401337208",
+    "title": "El nombre del viento",
+    "authors": "Patrick Rothfuss",
+    "price": 17.99,
+    "description": "La historia de Kvothe, músico, mendigo, ladrón, estudiante, mago, héroe y asesino.",
+    "publisher": "Plaza & Janés",
+    "genre": "Fantasía",
+    "imageUrl": "https://books.google.com/books/publisher/content?id=IZWWDwAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api"
+  },
+  {
+    "isbn": "9788466353779",
+    "title": "Dune",
+    "authors": "Frank Herbert",
+    "price": 14.99,
+    "description": "La mayor epopeya de ciencia ficción de todos los tiempos ambientada en Arrakis.",
+    "publisher": "Debolsillo",
+    "genre": "Ciencia Ficción",
+    "imageUrl": "https://books.google.com/books/publisher/content?id=uf5NEAAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api"
+  },
+  {
+    "isbn": "9788466357562",
+    "title": "1984",
+    "authors": "George Orwell",
+    "price": 8.99,
+    "description": "La novela distópica más famosa sobre el totalitarismo y la vigilancia masiva.",
+    "publisher": "Debolsillo",
+    "genre": "Ficción",
+    "imageUrl": "https://books.google.com/books/publisher/content?id=H8Y1EQAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api"
+  },
+  {
+    "isbn": "9789878000978",
+    "title": "El Principito",
+    "authors": "Antoine de Saint-Exupéry",
+    "price": 6.99,
+    "description": "Un cuento poético filosófico acompañado de ilustraciones hechas con acuarelas por el autor.",
+    "publisher": "Salamandra",
+    "genre": "Infantil",
+    "imageUrl": "https://books.google.com/books/publisher/content?id=KK6eEAAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api"
+  },
+  {
+    "isbn": "9788420667577",
+    "title": "Sherlock Holmes: Las aventuras imprescindibles",
+    "authors": "Sir Arthur Conan Doyle",
+    "price": 10.99,
+    "description": "Colección de los mejores casos del detective más famoso de Londres.",
+    "publisher": "Alianza Editorial",
+    "genre": "Misterio",
+    "imageUrl": "https://books.google.com/books/publisher/content?id=jgYmCQAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api"
+  }
+]
