@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>io.github.agusbattista</groupId>
 	<artifactId>mercadolibros-springboot</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>mercadolibros-springboot</name>
 	<description>API REST para un CRUD de libros con Spring Boot</description>
 	<url/>
