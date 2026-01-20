@@ -12,13 +12,13 @@ Este repositorio contiene una API REST hecha con Spring Boot que provee un CRUD 
 1) Clonar el repositorio
 
 ```bash
-  git clone git@github.com:agusbattista/mercadolibros-springboot.git
+git clone git@github.com:agusbattista/mercadolibros-springboot.git
 ```
 
 2) Entrar a la carpeta generada
 
 ```bash
-  cd mercadolibros-springboot
+cd mercadolibros-springboot
 ```
 
 3) Levantar la base de datos con Docker
@@ -27,13 +27,13 @@ Este repositorio contiene una API REST hecha con Spring Boot que provee un CRUD 
 > Docker Desktop debe estar corriendo antes de ejecutar el siguiente comando
 
 ```bash
-  docker compose up -d
+docker compose up -d
 ```
 
 4) Ejecutar la aplicación
 
 ```bash
-  ./mvnw spring-boot:run
+./mvnw spring-boot:run
 ```
 
 ### Corroborar que funciona
@@ -71,10 +71,10 @@ El panel phpMyAdmin estará disponible en:
 # Detener la aplicación: Ctrl + C
 
 # Detener Docker Compose manteniendo los datos
-  docker compose down
+docker compose down
 
 # Detener Docker Compose y eliminar volúmenes (limpieza completa de los datos)
-  docker compose down -v
+docker compose down -v
 ```
 
 ### Formato de un libro (ejemplo)
@@ -104,15 +104,15 @@ Si la base de datos ya contiene elementos (aunque estén eliminados lógicamente
 > Si desea evitar que se carguen datos de prueba, elimine los siguientes archivos para no generar ningún conflicto:
 
 ```text
-  src/main/java/io/github/agusbattista/mercadolibros_springboot/config/BookDataLoader.java
+src/main/java/io/github/agusbattista/mercadolibros_springboot/config/BookDataLoader.java
 ```
 
 ```text
-  src/test/java/io/github/agusbattista/mercadolibros_springboot/config/BookDataLoaderTest.java
+src/test/java/io/github/agusbattista/mercadolibros_springboot/config/BookDataLoaderTest.java
 ```
 
 ```text
-  src/main/resources/data/books.json
+src/main/resources/data/books.json
 ```
 
 ### Test
@@ -120,7 +120,7 @@ Si la base de datos ya contiene elementos (aunque estén eliminados lógicamente
 El proyecto contiene tests para las distintas capas. Se pueden ejecutar con el siguiente comando:
 
 ```bash
-  ./mvnw test
+./mvnw test
 ```
 
 ### Sobre el proyecto
