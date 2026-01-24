@@ -38,7 +38,7 @@ public class BookController {
   }
 
   @GetMapping("/{isbn}")
-  public ResponseEntity<BookResponseDTO> getBookByIsbn(@PathVariable String isbn) {
+  public ResponseEntity<BookResponseDTO> findByIsbn(@PathVariable String isbn) {
     BookResponseDTO book =
         bookService
             .findByIsbn(isbn)
