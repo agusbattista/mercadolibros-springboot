@@ -2,12 +2,14 @@ package io.github.agusbattista.mercadolibros_springboot.controller;
 
 import io.github.agusbattista.mercadolibros_springboot.dto.BookRequestDTO;
 import io.github.agusbattista.mercadolibros_springboot.dto.BookResponseDTO;
+import io.github.agusbattista.mercadolibros_springboot.dto.ValidationGroups;
 import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoundException;
 import io.github.agusbattista.mercadolibros_springboot.service.BookService;
-import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -55,13 +57,14 @@ public class BookController {
   }
 
   @PostMapping
-  public ResponseEntity<BookResponseDTO> save(@Valid @RequestBody BookRequestDTO book) {
+  public ResponseEntity<BookResponseDTO> save(
+      @Validated({ValidationGroups.Create.class, Default.class}) @RequestBody BookRequestDTO book) {
     return ResponseEntity.status(HttpStatus.CREATED).body(bookService.save(book));
   }
 
   @PutMapping("/{isbn}")
   public ResponseEntity<BookResponseDTO> update(
-      @PathVariable String isbn, @Valid @RequestBody BookRequestDTO book) {
+      @PathVariable String isbn, @Validated(Default.class) @RequestBody BookRequestDTO book) {
     return ResponseEntity.ok(bookService.update(isbn, book));
   }
 

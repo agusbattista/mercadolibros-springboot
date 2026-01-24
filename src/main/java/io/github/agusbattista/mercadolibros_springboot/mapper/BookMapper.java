@@ -21,5 +21,6 @@ public interface BookMapper {
 
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "deleted", ignore = true)
+  @Mapping(target = "isbn", ignore = true)
   void updateEntityFromRequest(BookRequestDTO request, @MappingTarget Book entity);
 }

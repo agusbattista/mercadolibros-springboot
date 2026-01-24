@@ -83,10 +83,6 @@ public class BookServiceImpl implements BookService {
     Objects.requireNonNull(isbn, "El ISBN no puede ser nulo");
     Objects.requireNonNull(
         requestBook, "Los datos del libro que quiere actualizar no pueden ser nulos");
-    if (!isbn.equals(requestBook.isbn())) {
-      throw new IllegalArgumentException(
-          "El ISBN proporcionado no coincide con el del libro que quiere actualizar. No se permite modificar el ISBN");
-    }
     Book existingBook =
         bookRepository
             .findByIsbn(isbn)

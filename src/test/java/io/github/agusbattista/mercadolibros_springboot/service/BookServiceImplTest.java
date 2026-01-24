@@ -39,7 +39,7 @@ class BookServiceImplTest {
             "9786073155731",
             "Canción de Hielo y Fuego (Colección)",
             "George R. R. Martin",
-            new BigDecimal(33.99),
+            new BigDecimal("33.99"),
             "La saga completa de Canción de Hielo y Fuego, la obra maestra de la fantasía moderna.",
             "Plaza & Janés",
             "Fantasía",
@@ -53,7 +53,7 @@ class BookServiceImplTest {
 
   @Test
   void findByIsbn_WhenIsbnExists_ShouldReturnBook() {
-    String isbn = "9786073155731";
+    String isbn = bookRequest.isbn();
     Book book = bookMapper.toEntity(bookRequest);
     when(bookRepository.findByIsbn(isbn)).thenReturn(Optional.of(book));
 
@@ -162,15 +162,9 @@ class BookServiceImplTest {
   }
 
   @Test
-  void update_WhenIsbnIsNotEqualToRequestBookIsbn_ShouldThrowIllegalArgumentException() {
-    assertThatThrownBy(() -> bookService.update("0000000000000", bookRequest))
-        .isInstanceOf(IllegalArgumentException.class);
-  }
-
-  @Test
   void update_WhenBookDoesNotExist_ShouldThrowResourceNotFoundException() {
     String isbn = bookRequest.isbn();
-    when(bookRepository.findByIsbn(bookRequest.isbn())).thenReturn(Optional.empty());
+    when(bookRepository.findByIsbn(isbn)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> bookService.update(isbn, bookRequest))
         .isInstanceOf(ResourceNotFoundException.class);
