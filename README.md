@@ -144,6 +144,10 @@ chmod +x test-books-api.sh
 ./test-books-api.sh
 ```
 
+### Colección Postman
+
+El archivo **"mercadolibros-springboot.postman_collection.json"** provee una colección para Postman que puede ser importada y utilizada. La ventaja de este enfoque es que ya tiene los endpoints disponibles y un ejemplo de que se espera para cada uno.
+
 ### Sobre el proyecto
 
 > [!IMPORTANT]

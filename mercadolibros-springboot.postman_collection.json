@@ -1,0 +1,188 @@
+{
+  "info": {
+    "_postman_id": "577660e7-2eda-4f5c-99c2-acd8c3a7ecfb",
+    "name": "mercadolibros-springboot",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "36127783"
+  },
+  "item": [
+    {
+      "name": "get books",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}",
+          "host": [
+            "{{BASE_URL}}"
+          ]
+        },
+        "description": "Devuelve todos los libros."
+      },
+      "response": []
+    },
+    {
+      "name": "create book",
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {}
+      },
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"isbn\": \"9877184931\",\n  \"title\": \"Alicia en el país de las maravillas\",\n  \"authors\": \"Lewis Carroll\",\n  \"price\": 4.99,\n  \"description\": \"La historia de Alicia y su increíble viaje a un mundo fantástico lleno de personajes extraños y aventuras inolvidables.\",\n  \"publisher\": \"Ediciones LEA\",\n  \"genre\": \"Fantasía\",\n  \"imageUrl\": \"https://books.google.com/books/publisher/content?id=oDzZDgAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&imgtk=AFLRE73FY6i2kA8yM02QLs0Ym79IU6ei_8Kp-0xqqfJ2NnY85PAXixaVMV1oKzrwQ7OKTWl2ZxuE6npi6S-6E3cGkbOQfr0eID63-EMrdQVT42AKshoDdJQXCTH_xGRpCTMN29rECIla&source=gbs_api\"\n}\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BASE_URL}}",
+          "host": [
+            "{{BASE_URL}}"
+          ]
+        },
+        "description": "Crea un nuevo libro.\n\nEl isbn, título, autores, precio, descripción, editorial, género e imagen son obligatorios."
+      },
+      "response": []
+    },
+    {
+      "name": "get book by isbn",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/{{ISBN}}",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "{{ISBN}}"
+          ]
+        },
+        "description": "Devuelve un libro en base a su ISBN."
+      },
+      "response": []
+    },
+    {
+      "name": "put book",
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {}
+      },
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Alicia en el país de las maravillas MODIFICADO\",\n  \"authors\": \"Lewis Carroll\",\n  \"price\": 4.99,\n  \"description\": \"La historia de Alicia y su increíble viaje a un mundo fantástico lleno de personajes extraños y aventuras inolvidables.\",\n  \"publisher\": \"Ediciones LEA\",\n  \"genre\": \"Fantasía\",\n  \"imageUrl\": \"https://books.google.com/books/publisher/content?id=oDzZDgAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&imgtk=AFLRE73FY6i2kA8yM02QLs0Ym79IU6ei_8Kp-0xqqfJ2NnY85PAXixaVMV1oKzrwQ7OKTWl2ZxuE6npi6S-6E3cGkbOQfr0eID63-EMrdQVT42AKshoDdJQXCTH_xGRpCTMN29rECIla&source=gbs_api\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/{{ISBN}}",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "{{ISBN}}"
+          ],
+          "query": [
+            {
+              "key": "",
+              "value": null,
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Actualiza un libro. El ISBN en el cuerpo de la petición no es necesario ya que se ignora."
+      },
+      "response": []
+    },
+    {
+      "name": "delete book",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/{{ISBN}}",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "{{ISBN}}"
+          ]
+        },
+        "description": "Elimina un libro a partir de su ISBN."
+      },
+      "response": []
+    },
+    {
+      "name": "search books",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/search?genre=FANTASÍA&publisher=Janés",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "search"
+          ],
+          "query": [
+            {
+              "key": "title",
+              "value": "Design%20Patterns",
+              "disabled": true
+            },
+            {
+              "key": "authors",
+              "value": "gamma",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "genre",
+              "value": "FANTASÍA"
+            },
+            {
+              "key": "publisher",
+              "value": "Janés"
+            },
+            {
+              "key": "title",
+              "value": "viento",
+              "disabled": true
+            },
+            {
+              "key": "authors",
+              "value": "Patrick",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Permite la búsqueda de libros mediante filtros. Cada filtro es opcional.\n\ntitle, authors y publisher son de búsqueda parcial sin distinguir mayúsculas y minúsculas.\n\ngenre es de busqueda exacta sin distinguir mayúsculas y minúsculas."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "ISBN",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}
