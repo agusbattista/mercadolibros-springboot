@@ -123,6 +123,27 @@ El proyecto contiene tests para las distintas capas. Se pueden ejecutar con el s
 ./mvnw test
 ```
 
+### Script bash
+
+En la raíz del repositorio se encuentra el script **"test-books-api.sh"**. El objetivo de este script es que sirva como una demostración de los endpoints con diferentes verbos HTTP y las respuestas esperadas en base a la información proporcionada.
+
+#### Precondiciones para que el script funcione correctamente
+
+- Los comandos **curl** y **jq** deben estar instalados.
+- La BDD y la API deben estar en ejecución.
+
+1) Dar permiso de ejecución al script:
+
+```bash
+chmod +x test-books-api.sh
+```
+
+2) Ejecutar de la siguiente manera:
+
+```bash
+./test-books-api.sh
+```
+
 ### Sobre el proyecto
 
 > [!IMPORTANT]
