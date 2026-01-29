@@ -3,6 +3,7 @@ package io.github.agusbattista.mercadolibros_springboot.controller;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -18,16 +19,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.agusbattista.mercadolibros_springboot.dto.BookRequestDTO;
 import io.github.agusbattista.mercadolibros_springboot.dto.BookResponseDTO;
+import io.github.agusbattista.mercadolibros_springboot.dto.PagedResponse;
 import io.github.agusbattista.mercadolibros_springboot.exception.DuplicateResourceException;
 import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoundException;
 import io.github.agusbattista.mercadolibros_springboot.service.BookService;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -40,6 +44,7 @@ class BookControllerTest {
   @Autowired private ObjectMapper objectMapper;
   private BookRequestDTO bookRequest;
   private BookResponseDTO bookResponse;
+  private PagedResponse<BookResponseDTO> pagedResponse;
 
   private static final String BASE_URL = "/api/books";
   private static final String ISBN_PATH_VARIABLE = "/{isbn}";
@@ -67,41 +72,58 @@ class BookControllerTest {
             "Plaza & Janés",
             "Fantasía",
             "https://books.google.com/books/publisher/content?id=krMsDwAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api");
+
+    pagedResponse =
+        new PagedResponse<>(
+            List.of(bookResponse), // content
+            0, // page
+            5, // size
+            1, // totalElements
+            1, // totalPages
+            true, // last
+            Map.of("sorted", "NONE"));
   }
 
   @Test
-  void findAll_ShouldReturnAllBooks() throws Exception {
-    String isbn = bookResponse.isbn();
-    when(bookService.findAll()).thenReturn(List.of(bookResponse));
+  void findAll_ShouldReturnPagedResponse() throws Exception {
+    when(bookService.findAll(any(Pageable.class))).thenReturn(pagedResponse);
+
+    mockMvc
+        .perform(get(BASE_URL).param("page", "0").param("size", "5"))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.content.length()").value(1))
+        .andExpect(jsonPath("$.content[0].isbn").value(bookResponse.isbn()))
+        .andExpect(jsonPath("$.page").value(0))
+        .andExpect(jsonPath("$.size").value(5))
+        .andExpect(jsonPath("$.totalElements").value(1))
+        .andExpect(jsonPath("$.last").value(true));
+
+    verify(bookService).findAll(any(Pageable.class));
+  }
+
+  @Test
+  void findAll_WhenNoBooksExist_ShouldReturnEmptyPagedResponse() throws Exception {
+    PagedResponse<BookResponseDTO> emptyPagedResponse =
+        new PagedResponse<>(List.of(), 0, 5, 0, 0, true, Map.of("sorted", "NONE"));
+    when(bookService.findAll(any(Pageable.class))).thenReturn(emptyPagedResponse);
 
     mockMvc
         .perform(get(BASE_URL))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$").isArray())
-        .andExpect(jsonPath("$.length()").value(1))
-        .andExpect(jsonPath("$[0].isbn").value(isbn));
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.content.length()").value(0))
+        .andExpect(jsonPath("$.totalElements").value(0))
+        .andExpect(jsonPath("$.last").value(true));
 
-    verify(bookService).findAll();
-  }
-
-  @Test
-  void findAll_WhenNoBooksExist_ShouldReturnEmptyList() throws Exception {
-    when(bookService.findAll()).thenReturn(List.of());
-
-    mockMvc
-        .perform(get(BASE_URL))
-        .andExpect(status().isOk())
-        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$").isArray())
-        .andExpect(jsonPath("$.length()").value(0));
-
-    verify(bookService).findAll();
+    verify(bookService).findAll(any(Pageable.class));
   }
 
   @Test
   void findAll_WhenUnexpectedErrorOccurs_ShouldReturnInternalServerError() throws Exception {
-    when(bookService.findAll()).thenThrow(new RuntimeException("DB crashed"));
+    when(bookService.findAll(any(Pageable.class))).thenThrow(new RuntimeException("DB crashed"));
 
     mockMvc
         .perform(get(BASE_URL))
@@ -109,7 +131,7 @@ class BookControllerTest {
         .andExpect(jsonPath("$.status").value(500))
         .andExpect(jsonPath("$.message").exists());
 
-    verify(bookService).findAll();
+    verify(bookService).findAll(any(Pageable.class));
   }
 
   @Test
@@ -144,23 +166,34 @@ class BookControllerTest {
   }
 
   @Test
-  void findBooksByCriteria_WhenParamsProvided_ShouldReturnFilteredBooks() throws Exception {
+  void findBooksByCriteria_WhenParamsProvided_ShouldReturnFilteredPagedResponse() throws Exception {
     String isbn = bookResponse.isbn();
     String title = "Fuego";
     String genre = "Fantasía";
     String url = BASE_URL + "/search";
-    when(bookService.findBooksByCriteria(title, null, genre, null))
-        .thenReturn(List.of(bookResponse));
+    when(bookService.findBooksByCriteria(
+            eq(title), isNull(), eq(genre), isNull(), any(Pageable.class)))
+        .thenReturn(pagedResponse);
 
     mockMvc
-        .perform(get(url).param("title", title).param("genre", genre))
+        .perform(
+            get(url)
+                .param("title", title)
+                .param("genre", genre)
+                .param("page", "0")
+                .param("size", "5"))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$").isArray())
-        .andExpect(jsonPath("$.length()").value(1))
-        .andExpect(jsonPath("$[0].isbn").value(isbn));
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.content.length()").value(1))
+        .andExpect(jsonPath("$.content[0].isbn").value(isbn))
+        .andExpect(jsonPath("$.page").value(0))
+        .andExpect(jsonPath("$.size").value(5))
+        .andExpect(jsonPath("$.totalElements").value(1))
+        .andExpect(jsonPath("$.last").value(true));
 
-    verify(bookService).findBooksByCriteria(title, null, genre, null);
+    verify(bookService)
+        .findBooksByCriteria(eq(title), isNull(), eq(genre), isNull(), any(Pageable.class));
   }
 
   @Test
