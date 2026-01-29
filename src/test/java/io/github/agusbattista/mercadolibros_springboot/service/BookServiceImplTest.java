@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import io.github.agusbattista.mercadolibros_springboot.dto.BookRequestDTO;
 import io.github.agusbattista.mercadolibros_springboot.dto.BookResponseDTO;
+import io.github.agusbattista.mercadolibros_springboot.dto.PagedResponse;
 import io.github.agusbattista.mercadolibros_springboot.exception.DuplicateResourceException;
 import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoundException;
 import io.github.agusbattista.mercadolibros_springboot.mapper.BookMapper;
@@ -12,19 +13,24 @@ import io.github.agusbattista.mercadolibros_springboot.mapper.BookMapperImpl;
 import io.github.agusbattista.mercadolibros_springboot.model.Book;
 import io.github.agusbattista.mercadolibros_springboot.repository.BookRepository;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class BookServiceImplTest {
 
   @Mock private BookRepository bookRepository;
 
-  private BookMapper bookMapper = new BookMapperImpl();
+  private final BookMapper bookMapper = new BookMapperImpl();
 
   private BookServiceImpl bookService;
 
@@ -186,5 +192,58 @@ class BookServiceImplTest {
     assertThat(result.title()).isEqualTo(newTitle);
     verify(bookRepository).findByIsbn(isbn);
     verify(bookRepository).save(book);
+  }
+
+  @Test
+  void findlAll_Paged_ShouldReturnPagedResponse() {
+    Pageable pageable = PageRequest.of(0, 10);
+    Book book = bookMapper.toEntity(bookRequest);
+    Page<Book> booksPage = new PageImpl<>(List.of(book), pageable, 1);
+    when(bookRepository.findAll(pageable)).thenReturn(booksPage);
+
+    PagedResponse<BookResponseDTO> response = bookService.findAll(pageable);
+
+    assertThat(response).isNotNull();
+    assertThat(response.content()).hasSize(1);
+    assertThat(response.content().getFirst().isbn()).isEqualTo(bookRequest.isbn());
+    assertThat(response.page()).isZero();
+    assertThat(response.totalElements()).isEqualTo(1);
+    assertThat(response.totalPages()).isEqualTo(1);
+    verify(bookRepository).findAll(pageable);
+  }
+
+  @Test
+  void findBooksByCriteria_Paged_ShouldReturnPagedResponse() {
+    String title = "Hielo";
+    Pageable pageable = PageRequest.of(0, 5);
+    Book book = bookMapper.toEntity(bookRequest);
+    Page<Book> booksPage = new PageImpl<>(List.of(book), pageable, 1);
+    when(bookRepository.findBooksByCriteria(title, null, null, null, pageable))
+        .thenReturn(booksPage);
+
+    PagedResponse<BookResponseDTO> response =
+        bookService.findBooksByCriteria(title, null, null, null, pageable);
+
+    assertThat(response).isNotNull();
+    assertThat(response.content()).hasSize(1);
+    assertThat(response.page()).isZero();
+    assertThat(response.totalElements()).isEqualTo(1);
+    assertThat(response.totalPages()).isEqualTo(1);
+    assertThat(response.content().getFirst().title()).isEqualTo(bookRequest.title());
+    verify(bookRepository).findBooksByCriteria(title, null, null, null, pageable);
+  }
+
+  @Test
+  void findAll_Paged_WhenEmpty_ShouldReturnEmptyPagedResponse() {
+    Pageable pageable = PageRequest.of(0, 10);
+    Page<Book> emptyPage = Page.empty(pageable);
+    when(bookRepository.findAll(pageable)).thenReturn(emptyPage);
+
+    PagedResponse<BookResponseDTO> response = bookService.findAll(pageable);
+
+    assertThat(response.content()).isEmpty();
+    assertThat(response.totalElements()).isZero();
+    assertThat(response.totalPages()).isZero();
+    verify(bookRepository).findAll(pageable);
   }
 }
