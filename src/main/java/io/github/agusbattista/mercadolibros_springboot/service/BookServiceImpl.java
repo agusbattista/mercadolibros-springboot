@@ -2,14 +2,16 @@ package io.github.agusbattista.mercadolibros_springboot.service;
 
 import io.github.agusbattista.mercadolibros_springboot.dto.BookRequestDTO;
 import io.github.agusbattista.mercadolibros_springboot.dto.BookResponseDTO;
+import io.github.agusbattista.mercadolibros_springboot.dto.PagedResponse;
 import io.github.agusbattista.mercadolibros_springboot.exception.DuplicateResourceException;
 import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoundException;
 import io.github.agusbattista.mercadolibros_springboot.mapper.BookMapper;
 import io.github.agusbattista.mercadolibros_springboot.model.Book;
 import io.github.agusbattista.mercadolibros_springboot.repository.BookRepository;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,8 +28,8 @@ public class BookServiceImpl implements BookService {
   }
 
   @Override
-  public List<BookResponseDTO> findAll() {
-    return bookMapper.toResponseList(bookRepository.findAll());
+  public PagedResponse<BookResponseDTO> findAll(Pageable pageable) {
+    return this.toPagedResponse(bookRepository.findAll(pageable));
   }
 
   @Override
@@ -37,10 +39,10 @@ public class BookServiceImpl implements BookService {
   }
 
   @Override
-  public List<BookResponseDTO> findBooksByCriteria(
-      String title, String authors, String genre, String publisher) {
-    return bookMapper.toResponseList(
-        bookRepository.findBooksByCriteria(title, authors, genre, publisher));
+  public PagedResponse<BookResponseDTO> findBooksByCriteria(
+      String title, String authors, String genre, String publisher, Pageable pageable) {
+    return this.toPagedResponse(
+        bookRepository.findBooksByCriteria(title, authors, genre, publisher, pageable));
   }
 
   @Override
@@ -93,5 +95,9 @@ public class BookServiceImpl implements BookService {
 
   private String isbnNotFound(String isbn) {
     return "Libro con ISBN: " + isbn + " no encontrado";
+  }
+
+  private PagedResponse<BookResponseDTO> toPagedResponse(Page<Book> booksPage) {
+    return PagedResponse.from(booksPage.map(bookMapper::toResponse));
   }
 }
