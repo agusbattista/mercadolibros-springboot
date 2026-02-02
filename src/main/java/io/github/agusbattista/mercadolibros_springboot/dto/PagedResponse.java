@@ -29,7 +29,8 @@ public record PagedResponse<T>(
         sortInfo);
   }
 
-  private static <T> @NonNull Map<String, String> createSortMap(Page<T> page) {
+  @NonNull
+  private static <T> Map<String, String> createSortMap(Page<T> page) {
     Map<String, String> sortInfo = new LinkedHashMap<>();
     if (page.getSort().isUnsorted()) {
       sortInfo.put("sorted", "NONE");
