@@ -45,8 +45,40 @@ separator() {
 curl -s -o /dev/null -X DELETE "$BASE_URL/$ALICIA_ISBN"
 
 # TESTS
-print_test "Petición GET a /api/books"
+separator
+
+print_test "Petición GET a /api/books (paginación por defecto)"
 curl -s "$BASE_URL" | jq
+
+separator
+
+print_test "Petición GET a /api/books con paginación (página 1)"
+curl -s "$BASE_URL?page=1" | jq
+
+separator
+
+print_test "Petición GET a /api/books con paginación (página 0, tamaño 2)"
+curl -s "$BASE_URL?page=0&size=2" | jq
+
+separator
+
+print_test "Petición GET a /api/books con ordenamiento (por título ascendente)"
+curl -s "$BASE_URL?sort=title,asc" | jq
+
+separator
+
+print_test "Petición GET a /api/books con ordenamiento (por precio descendente)"
+curl -s "$BASE_URL?sort=price,desc" | jq
+
+separator
+
+print_test "Petición GET a /api/books con ordenamiento múltiple (por género ascendente, luego precio descendente)"
+curl -s "$BASE_URL?sort=genre,asc&sort=price,desc" | jq
+
+separator
+
+print_test "Petición GET a /api/books con paginación y ordenamiento (página 0, tamaño 3, por precio ascendente)"
+curl -s "$BASE_URL?page=0&size=3&sort=price,asc" | jq
 
 separator
 
@@ -87,6 +119,21 @@ separator
 
 print_test "Petición GET a /api/books/search con género 'Fantasía' y editorial 'Janés'"
 curl -s -G "$BASE_URL/search" --data-urlencode "genre=Fantasía" --data-urlencode "publisher=Janés" | jq
+
+separator
+
+print_test "Petición GET a /api/books/search con género 'Fantasía', paginación y ordenamiento (página 0, tamaño 2, por precio descendente)"
+curl -s -G "$BASE_URL/search" --data-urlencode "genre=Fantasía" --data-urlencode "page=0" --data-urlencode "size=2" --data-urlencode "sort=price,desc" | jq
+
+separator
+
+print_test "Petición GET a /api/books/search con título parcial (Alicia)"
+curl -s -G "$BASE_URL/search" --data-urlencode "title=Alicia" | jq
+
+separator
+
+print_test "Petición GET a /api/books/search con autor parcial (Carroll)"
+curl -s -G "$BASE_URL/search" --data-urlencode "authors=Carroll" | jq
 
 separator
 

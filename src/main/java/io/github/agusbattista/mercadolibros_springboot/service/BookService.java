@@ -2,17 +2,18 @@ package io.github.agusbattista.mercadolibros_springboot.service;
 
 import io.github.agusbattista.mercadolibros_springboot.dto.BookRequestDTO;
 import io.github.agusbattista.mercadolibros_springboot.dto.BookResponseDTO;
-import java.util.List;
+import io.github.agusbattista.mercadolibros_springboot.dto.PagedResponse;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 
 public interface BookService {
 
-  List<BookResponseDTO> findAll();
+  PagedResponse<BookResponseDTO> findAll(Pageable pageable);
 
   Optional<BookResponseDTO> findByIsbn(String isbn);
 
-  List<BookResponseDTO> findBooksByCriteria(
-      String title, String authors, String genre, String publisher);
+  PagedResponse<BookResponseDTO> findBooksByCriteria(
+      String title, String authors, String genre, String publisher, Pageable pageable);
 
   BookResponseDTO save(BookRequestDTO book);
 

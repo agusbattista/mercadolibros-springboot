@@ -4,13 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.agusbattista.mercadolibros_springboot.model.Book;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @DataJpaTest
 class BookRepositoryTest {
@@ -29,7 +32,7 @@ class BookRepositoryTest {
     book1.setIsbn("9786073155731");
     book1.setTitle("Canción de Hielo y Fuego (Colección)");
     book1.setAuthors("George R. R. Martin");
-    book1.setPrice(new BigDecimal(33.99));
+    book1.setPrice(new BigDecimal("33.99"));
     book1.setDescription(
         "La saga completa de Canción de Hielo y Fuego, la obra maestra de la fantasía moderna.");
     book1.setPublisher("Plaza & Janés");
@@ -42,7 +45,7 @@ class BookRepositoryTest {
     book2.setIsbn("9788445073728");
     book2.setTitle("La Comunidad del Anillo");
     book2.setAuthors("J. R. R. Tolkien");
-    book2.setPrice(new BigDecimal(12.99));
+    book2.setPrice(new BigDecimal("12.99"));
     book2.setDescription("La primera parte de la historia de la Guerra del Anillo.");
     book2.setPublisher("Minotauro");
     book2.setGenre("Fantasía");
@@ -54,7 +57,7 @@ class BookRepositoryTest {
     book3.setIsbn("9788401337208");
     book3.setTitle("El nombre del viento");
     book3.setAuthors("Patrick Rothfuss");
-    book3.setPrice(new BigDecimal(17.99));
+    book3.setPrice(new BigDecimal("17.99"));
     book3.setDescription(
         "La historia de Kvothe, músico, mendigo, ladrón, estudiante, mago, héroe y asesino.");
     book3.setPublisher("Plaza & Janés");
@@ -68,25 +71,29 @@ class BookRepositoryTest {
 
   @Test
   void findBooksByCriteria_ByTitle_ShouldReturnMatchingBooks() {
-    List<Book> found = bookRepository.findBooksByCriteria("hielo", null, null, null);
-    assertThat(found)
+    Page<Book> found =
+        bookRepository.findBooksByCriteria("hielo", null, null, null, Pageable.unpaged());
+    assertThat(found.getContent())
         .hasSize(1)
         .extracting(Book::getTitle)
         .containsExactly("Canción de Hielo y Fuego (Colección)");
-    List<Book> otherFound = bookRepository.findBooksByCriteria("n", null, null, null);
-    assertThat(otherFound).hasSize(3);
+    Page<Book> otherFound =
+        bookRepository.findBooksByCriteria("n", null, null, null, Pageable.unpaged());
+    assertThat(otherFound.getContent()).hasSize(3);
   }
 
   @Test
   void findBooksByCriteria_ByTitle_ShouldNotReturnBooks() {
-    List<Book> found = bookRepository.findBooksByCriteria("Refactoring", null, null, null);
-    assertThat(found).isEmpty();
+    Page<Book> found =
+        bookRepository.findBooksByCriteria("Refactoring", null, null, null, Pageable.unpaged());
+    assertThat(found.getContent()).isEmpty();
   }
 
   @Test
   void findBooksByCriteria_ByAuthors_ShouldReturnMatchingBooks() {
-    List<Book> found = bookRepository.findBooksByCriteria(null, "martin", null, null);
-    assertThat(found)
+    Page<Book> found =
+        bookRepository.findBooksByCriteria(null, "martin", null, null, Pageable.unpaged());
+    assertThat(found.getContent())
         .hasSize(1)
         .extracting(Book::getAuthors)
         .containsExactly("George R. R. Martin");
@@ -94,52 +101,118 @@ class BookRepositoryTest {
 
   @Test
   void findBooksByCriteria_ByAuthors_ShouldNotReturnBooks() {
-    List<Book> found = bookRepository.findBooksByCriteria(null, "martina", null, null);
-    assertThat(found).isEmpty();
+    Page<Book> found =
+        bookRepository.findBooksByCriteria(null, "martina", null, null, Pageable.unpaged());
+    assertThat(found.getContent()).isEmpty();
   }
 
   @Test
   void findBooksByCriteria_ByGenre_ShouldReturnMatchingBooks() {
-    List<Book> found = bookRepository.findBooksByCriteria(null, null, "FANTASÍA", null);
-    assertThat(found).hasSize(3);
+    Page<Book> found =
+        bookRepository.findBooksByCriteria(null, null, "FANTASÍA", null, Pageable.unpaged());
+    assertThat(found.getContent()).hasSize(3);
   }
 
   @Test
   void findBooksByCriteria_ByGenre_ShouldNotReturnBooks() {
-    List<Book> found = bookRepository.findBooksByCriteria(null, null, "FANTASY", null);
-    assertThat(found).isEmpty();
+    Page<Book> found =
+        bookRepository.findBooksByCriteria(null, null, "FANTASY", null, Pageable.unpaged());
+    assertThat(found.getContent()).isEmpty();
   }
 
   @Test
   void findBooksByCriteria_ByPublisher_ShouldReturnMatchingBooks() {
-    List<Book> found = bookRepository.findBooksByCriteria(null, null, null, "Janés");
-    assertThat(found).hasSize(2);
+    Page<Book> found =
+        bookRepository.findBooksByCriteria(null, null, null, "Janés", Pageable.unpaged());
+    assertThat(found.getContent()).hasSize(2);
   }
 
   @Test
   void findBooksByCriteria_ByPublisher_ShouldNotReturnBooks() {
-    List<Book> found = bookRepository.findBooksByCriteria(null, null, null, "Debolsillo");
-    assertThat(found).isEmpty();
+    Page<Book> found =
+        bookRepository.findBooksByCriteria(null, null, null, "Debolsillo", Pageable.unpaged());
+    assertThat(found.getContent()).isEmpty();
   }
 
   @Test
   void findBooksByCriteria_WithMultipleCriteria_ShouldFilterCorrectly() {
-    List<Book> found = bookRepository.findBooksByCriteria(null, null, "FANTASÍA", "Janés");
-    assertThat(found)
+    Page<Book> found =
+        bookRepository.findBooksByCriteria(null, null, "FANTASÍA", "Janés", Pageable.unpaged());
+    assertThat(found.getContent())
         .hasSize(2)
         .extracting(Book::getTitle)
         .containsExactlyInAnyOrder("Canción de Hielo y Fuego (Colección)", "El nombre del viento");
-    List<Book> otherFound = bookRepository.findBooksByCriteria("viento", null, "FANTASÍA", "Janés");
-    assertThat(otherFound).hasSize(1);
-    List<Book> otherFound2 =
-        bookRepository.findBooksByCriteria("viento", "patricK", "FANTASÍA", "Janés");
-    assertThat(otherFound2).hasSize(1);
+    Page<Book> otherFound =
+        bookRepository.findBooksByCriteria("viento", null, "FANTASÍA", "Janés", Pageable.unpaged());
+    assertThat(otherFound.getContent()).hasSize(1);
+    Page<Book> otherFound2 =
+        bookRepository.findBooksByCriteria(
+            "viento", "patricK", "FANTASÍA", "Janés", Pageable.unpaged());
+    assertThat(otherFound2.getContent()).hasSize(1);
   }
 
   @Test
   void findBooksByCriteria_WithNoCriteria_ShouldReturnAll() {
-    List<Book> found = bookRepository.findBooksByCriteria(null, null, null, null);
-    assertThat(found).hasSize(3);
+    Page<Book> found =
+        bookRepository.findBooksByCriteria(null, null, null, null, Pageable.unpaged());
+    assertThat(found.getContent()).hasSize(3);
+  }
+
+  @Test
+  void findBooksByCriteria_Paged_ShouldLimitResults() {
+    Pageable pageable = PageRequest.of(0, 1);
+
+    Page<Book> found = bookRepository.findBooksByCriteria(null, null, null, null, pageable);
+
+    assertThat(found.getContent()).hasSize(1);
+    assertThat(found.getTotalElements()).isEqualTo(3);
+    assertThat(found.getTotalPages()).isEqualTo(3);
+    assertThat(found.isLast()).isFalse();
+  }
+
+  @Test
+  void findBooksByCriteria_Paged_ShouldNavigateToLastPage() {
+    Pageable pageable = PageRequest.of(2, 1);
+
+    Page<Book> found = bookRepository.findBooksByCriteria(null, null, null, null, pageable);
+
+    assertThat(found.getContent()).isNotEmpty();
+    assertThat(found.getNumber()).isEqualTo(2);
+    assertThat(found.isLast()).isTrue();
+  }
+
+  @Test
+  void findBooksByCriteria_Paged_AndSorted_ShouldOrderResults() {
+    Pageable pageable = PageRequest.of(0, 10, Sort.by("title").descending());
+
+    Page<Book> found = bookRepository.findBooksByCriteria(null, null, null, null, pageable);
+
+    assertThat(found.getContent())
+        .extracting(Book::getTitle)
+        .containsExactly(book2.getTitle(), book3.getTitle(), book1.getTitle());
+  }
+
+  @Test
+  void findBooksByCriteria_Paged_WithFilters_ShouldCountOnlyMatchingBooks() {
+    Book distractorBook = new Book();
+    distractorBook.setIsbn("1111111111111");
+    distractorBook.setTitle("Libro de Cocina");
+    distractorBook.setAuthors("Chef X");
+    distractorBook.setPrice(new BigDecimal("10.00"));
+    distractorBook.setGenre("Cocina");
+    distractorBook.setPublisher("Editorial X");
+    distractorBook.setDescription("Recetas...");
+    distractorBook.setImageUrl("http://image.url");
+    entityManager.persist(distractorBook);
+    entityManager.flush();
+
+    Pageable pageable = PageRequest.of(0, 2);
+    Page<Book> found = bookRepository.findBooksByCriteria(null, null, "FANTASÍA", null, pageable);
+
+    assertThat(found.getTotalElements()).isEqualTo(3);
+    assertThat(found.getContent()).hasSize(2);
+    assertThat(found.isLast()).isFalse();
+    assertThat(found.getContent()).extracting(Book::getGenre).containsOnly("Fantasía");
   }
 
   @Test

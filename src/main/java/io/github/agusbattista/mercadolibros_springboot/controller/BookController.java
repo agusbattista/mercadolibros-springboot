@@ -2,11 +2,12 @@ package io.github.agusbattista.mercadolibros_springboot.controller;
 
 import io.github.agusbattista.mercadolibros_springboot.dto.BookRequestDTO;
 import io.github.agusbattista.mercadolibros_springboot.dto.BookResponseDTO;
+import io.github.agusbattista.mercadolibros_springboot.dto.PagedResponse;
 import io.github.agusbattista.mercadolibros_springboot.dto.ValidationGroups;
 import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoundException;
 import io.github.agusbattista.mercadolibros_springboot.service.BookService;
 import jakarta.validation.groups.Default;
-import java.util.List;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -33,8 +34,8 @@ public class BookController {
   }
 
   @GetMapping
-  public ResponseEntity<List<BookResponseDTO>> findAll() {
-    return ResponseEntity.ok(bookService.findAll());
+  public ResponseEntity<PagedResponse<BookResponseDTO>> findAll(Pageable pageable) {
+    return ResponseEntity.ok(bookService.findAll(pageable));
   }
 
   @GetMapping("/{isbn}")
@@ -48,12 +49,14 @@ public class BookController {
   }
 
   @GetMapping("/search")
-  public ResponseEntity<List<BookResponseDTO>> findBooksByCriteria(
+  public ResponseEntity<PagedResponse<BookResponseDTO>> findBooksByCriteria(
       @RequestParam(required = false) String title,
       @RequestParam(required = false) String authors,
       @RequestParam(required = false) String genre,
-      @RequestParam(required = false) String publisher) {
-    return ResponseEntity.ok(bookService.findBooksByCriteria(title, authors, genre, publisher));
+      @RequestParam(required = false) String publisher,
+      Pageable pageable) {
+    return ResponseEntity.ok(
+        bookService.findBooksByCriteria(title, authors, genre, publisher, pageable));
   }
 
   @PostMapping

@@ -1,8 +1,9 @@
 package io.github.agusbattista.mercadolibros_springboot.repository;
 
 import io.github.agusbattista.mercadolibros_springboot.model.Book;
-import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,11 +20,12 @@ public interface BookRepository extends JpaRepository<Book, Long> {
           + "(:authors IS NULL OR LOWER(b.authors) LIKE LOWER(CONCAT('%', :authors, '%'))) AND "
           + "(:genre IS NULL OR LOWER(b.genre) = LOWER(:genre)) AND "
           + "(:publisher IS NULL OR LOWER(b.publisher) LIKE LOWER(CONCAT('%', :publisher, '%')))")
-  List<Book> findBooksByCriteria(
+  Page<Book> findBooksByCriteria(
       @Param("title") String title,
       @Param("authors") String authors,
       @Param("genre") String genre,
-      @Param("publisher") String publisher);
+      @Param("publisher") String publisher,
+      Pageable pageable);
 
   @Query(value = "SELECT * FROM books WHERE isbn = :isbn", nativeQuery = true)
   Optional<Book> findByIsbnIncludingDeleted(String isbn);

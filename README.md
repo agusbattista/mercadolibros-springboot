@@ -2,26 +2,28 @@
 
 Este repositorio contiene una API REST hecha con Spring Boot que provee un CRUD de libros.
 
+<img src="browser-screenshot.jpg" width="65%">
+
 ### Programas necesarios para ejecutarlo
 
-1) JDK de Java 21
-2) Docker
+1. JDK de Java 21
+2. Docker
 
 ### Para ejecutarlo localmente
 
-1) Clonar el repositorio
+1. Clonar el repositorio
 
 ```bash
 git clone git@github.com:agusbattista/mercadolibros-springboot.git
 ```
 
-2) Entrar a la carpeta generada
+2. Entrar a la carpeta generada
 
 ```bash
 cd mercadolibros-springboot
 ```
 
-3) Levantar la base de datos con Docker
+3. Levantar la base de datos con Docker
 
 > [!IMPORTANT]
 > Docker Desktop debe estar corriendo antes de ejecutar el siguiente comando
@@ -30,7 +32,7 @@ cd mercadolibros-springboot
 docker compose up -d
 ```
 
-4) Ejecutar la aplicación
+4. Ejecutar la aplicación
 
 ```bash
 ./mvnw spring-boot:run
@@ -65,17 +67,42 @@ El panel phpMyAdmin estará disponible en:
 - `PUT /api/books/{isbn}` - Actualizar un libro
 - `DELETE /api/books/{isbn}` - Eliminar un libro
 
-### Detener los servicios
+### Paginación y ordenamiento
 
-```bash
-# Detener la aplicación: Ctrl + C
+Todos los endpoints que devuelven listas de libros (`GET /api/books` y `GET /api/books/search`) soportan paginación y ordenamiento mediante query params.
 
-# Detener Docker Compose manteniendo los datos
-docker compose down
+#### Parámetros de paginación
 
-# Detener Docker Compose y eliminar volúmenes (limpieza completa de los datos)
-docker compose down -v
-```
+- `page` - Número de página (comenzando desde 0). Por defecto: 0
+- `size` - Cantidad de elementos por página. Por defecto: 5
+
+#### Parámetros de ordenamiento
+
+- `sort` - Campo y dirección de ordenamiento en formato `campo,direccion`. Por defecto: sin ordenación
+  - Dirección puede ser `asc` (ascendente) o `desc` (descendente)
+  - Se pueden aplicar múltiples ordenamientos agregando múltiples parámetros `sort`
+  - Se puede utilizar cualquiera de los campos de un libro para el ordenamiento. Por defecto es ascendente
+
+#### Ejemplos de uso
+
+#### Paginación básica:
+
+- `/api/books?page=0&size=2` - Primera página con 2 elementos
+- `/api/books?page=1&size=5` - Segunda página con 5 elementos
+
+#### Ordenamiento simple:
+
+- `/api/books?sort=title,asc` - Ordenar por título ascendente
+- `/api/books?sort=price,desc` - Ordenar por precio descendente
+
+#### Ordenamiento múltiple:
+
+- `/api/books?sort=genre,asc&sort=price,desc` - Ordenar por género ascendente, luego por precio descendente
+
+#### Combinando paginación y ordenamiento:
+
+- `/api/books?page=0&size=3&sort=price,asc` - Primera página con 3 elementos, ordenados por precio ascendente
+- `/api/books/search?genre=Fantasía&page=0&size=2&sort=price,desc` - Búsqueda de género "Fantasía", primera página con 2 elementos, ordenados por precio descendente
 
 ### Formato de un libro (ejemplo)
 
@@ -132,13 +159,13 @@ En la raíz del repositorio se encuentra el script **"test-books-api.sh"**. El o
 - Los comandos **curl** y **jq** deben estar instalados.
 - La BDD y la API deben estar en ejecución.
 
-1) Dar permiso de ejecución al script:
+1. Dar permiso de ejecución al script:
 
 ```bash
 chmod +x test-books-api.sh
 ```
 
-2) Ejecutar de la siguiente manera:
+2. Ejecutar de la siguiente manera:
 
 ```bash
 ./test-books-api.sh
@@ -147,6 +174,18 @@ chmod +x test-books-api.sh
 ### Colección Postman
 
 El archivo **"mercadolibros-springboot.postman_collection.json"** provee una colección para Postman que puede ser importada y utilizada. La ventaja de este enfoque es que ya tiene los endpoints disponibles y un ejemplo de que se espera para cada uno.
+
+### Detener los servicios
+
+```bash
+# Detener la aplicación: Ctrl + C
+
+# Detener Docker Compose manteniendo los datos
+docker compose down
+
+# Detener Docker Compose y eliminar volúmenes (limpieza completa de los datos)
+docker compose down -v
+```
 
 ### Sobre el proyecto
 
