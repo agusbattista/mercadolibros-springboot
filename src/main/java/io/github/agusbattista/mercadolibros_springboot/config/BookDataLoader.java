@@ -42,8 +42,7 @@ public class BookDataLoader implements CommandLineRunner {
 
   private void loadBooksFromJson() throws IOException {
     InputStream inputStream = getClass().getResourceAsStream("/data/books.json");
-    List<BookRequestDTO> dtos =
-        objectMapper.readValue(inputStream, new TypeReference<List<BookRequestDTO>>() {});
+    List<BookRequestDTO> dtos = objectMapper.readValue(inputStream, new TypeReference<>() {});
     List<Book> books = dtos.stream().map(bookMapper::toEntity).toList();
     bookRepository.saveAll(books);
     log.info("Carga exitosa: {} libros guardados en la base de datos", books.size());
