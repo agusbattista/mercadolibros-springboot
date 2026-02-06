@@ -23,8 +23,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class BookDataLoaderTest {
 
   @Mock private BookRepository bookRepository;
-  private BookMapper bookMapper = new BookMapperImpl();
-  private ObjectMapper objectMapper = new ObjectMapper();
+  private final BookMapper bookMapper = new BookMapperImpl();
+  private final ObjectMapper objectMapper = new ObjectMapper();
   private BookDataLoader bookDataLoader;
 
   @BeforeEach
@@ -44,7 +44,7 @@ class BookDataLoaderTest {
     List<Book> savedBooks = listCaptor.getValue();
 
     assertThat(savedBooks).isNotEmpty();
-    assertThat(savedBooks.get(0).getTitle()).isNotBlank();
+    assertThat(savedBooks.getFirst().getTitle()).isNotBlank();
     verify(bookRepository).countAllIncludingDeleted();
   }
 
