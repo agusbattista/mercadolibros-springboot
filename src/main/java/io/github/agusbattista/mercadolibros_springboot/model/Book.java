@@ -25,10 +25,10 @@ public class Book {
   @Column(nullable = false)
   private boolean deleted = false;
 
-  @Column(nullable = false, length = 255)
+  @Column(nullable = false)
   private String title;
 
-  @Column(nullable = false, length = 255)
+  @Column(nullable = false)
   private String authors;
 
   @Column(nullable = false, precision = 10, scale = 2)
@@ -37,7 +37,7 @@ public class Book {
   @Column(nullable = false, columnDefinition = "TEXT")
   private String description;
 
-  @Column(nullable = false, length = 255)
+  @Column(nullable = false)
   private String publisher;
 
   @Column(nullable = false, length = 100)
