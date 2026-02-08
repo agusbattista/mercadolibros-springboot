@@ -44,7 +44,7 @@ La API estará disponible en:
 <http://localhost:8080/api/books>
 
 El panel phpMyAdmin estará disponible en:
-<http://localhost:8081/>
+<http://localhost:8081>
 
 - Usuario: `root`
 - Contraseña: `root`
@@ -52,7 +52,8 @@ El panel phpMyAdmin estará disponible en:
 ### Endpoints disponibles
 
 - `GET /api/books` - Listar todos los libros
-- `GET /api/books/{isbn}` - Obtener un libro por ISBN
+- `GET /api/books/{uuid}` - Obtener un libro por su UUID
+- `GET /api/books/isbn/{isbn}` - Obtener un libro por ISBN
 - `GET /api/books/search` - Buscar libros por criterios (título, autores, género, editorial)
   - **Parámetros opcionales (query params):**
     - `title` - Buscar por título (búsqueda parcial, no es sensible a mayúsculas y minúsculas)
@@ -64,8 +65,15 @@ El panel phpMyAdmin estará disponible en:
     - `/api/books/search?genre=FANTASÍA&authors=Patrick` - Libros de "patrick" del género "fantasía"
     - `/api/books/search` - Sin parámetros devuelve todos los libros
 - `POST /api/books` - Crear un libro
-- `PUT /api/books/{isbn}` - Actualizar un libro
-- `DELETE /api/books/{isbn}` - Eliminar un libro
+- `PUT /api/books/{uuid}` - Actualizar un libro
+- `DELETE /api/books/{uuid}` - Eliminar un libro (borrado lógico / soft delete)
+
+> [!NOTE] 
+> La API utiliza UUID como identificador para las operaciones de modificación y búsqueda específica.
+>
+> Al crear un libro, el sistema le asigna un UUID (que se incluye en la respuesta) para futuras consultas o modificaciones.
+>
+> Si intenta crear un libro con un ISBN que existe pero fue eliminado lógicamente, el sistema lo restaurará y actualizará sus datos.
 
 ### Paginación y ordenamiento
 
@@ -106,8 +114,11 @@ Todos los endpoints que devuelven listas de libros (`GET /api/books` y `GET /api
 
 ### Formato de un libro (ejemplo)
 
+La API devuelve el libro incluyendo su identificador único (uuid).
+
 ```JSON
 {
+  "uuid": "15226072-bbe0-402c-8691-2da79692be1b",
   "isbn": "9788466357562",
   "title": "1984",
   "authors": "George Orwell",
@@ -121,11 +132,11 @@ Todos los endpoints que devuelven listas de libros (`GET /api/books` y `GET /api
 
 ### Datos de prueba
 
-El proyecto contiene un CommandLineRunner que carga diez libros con datos de prueba. Esto ocurre la primera vez que se ejecuta la aplicación o que se corren los test.
+El proyecto contiene un **CommandLineRunner** que carga diez libros con datos de prueba. Esto ocurre la primera vez que se ejecuta la aplicación o que se corren los test.
 
 Si la base de datos ya contiene elementos (aunque estén eliminados lógicamente), no se agregarán libros.
 
-> [!NOTE]
+> [!WARNING]
 > Evite editar o borrar el archivo "src/main/resources/data/books.json" si no está seguro de cómo hacerlo o qué clases debe ajustar.
 >
 > Si desea evitar que se carguen datos de prueba, elimine los siguientes archivos para no generar ningún conflicto:
@@ -144,36 +155,15 @@ src/main/resources/data/books.json
 
 ### Test
 
-El proyecto contiene tests para las distintas capas. Se pueden ejecutar con el siguiente comando:
+El proyecto contiene tests para las distintas capas de la aplicación. Se pueden ejecutar con el siguiente comando:
 
 ```bash
 ./mvnw test
 ```
 
-### Script bash
-
-En la raíz del repositorio se encuentra el script **"test-books-api.sh"**. El objetivo de este script es que sirva como una demostración de los endpoints con diferentes verbos HTTP y las respuestas esperadas en base a la información proporcionada.
-
-#### Precondiciones para que el script funcione correctamente
-
-- Los comandos **curl** y **jq** deben estar instalados.
-- La BDD y la API deben estar en ejecución.
-
-1. Dar permiso de ejecución al script:
-
-```bash
-chmod +x test-books-api.sh
-```
-
-2. Ejecutar de la siguiente manera:
-
-```bash
-./test-books-api.sh
-```
-
 ### Colección Postman
 
-El archivo **"mercadolibros-springboot.postman_collection.json"** provee una colección para Postman que puede ser importada y utilizada. La ventaja de este enfoque es que ya tiene los endpoints disponibles y un ejemplo de que se espera para cada uno.
+El archivo **"mercadolibros-springboot.postman_collection.json"** provee una colección para Postman que puede ser importada y utilizada. La ventaja de este enfoque es que ya tiene los endpoints disponibles y ejemplos de que se espera para cada uno.
 
 ### Detener los servicios
 
