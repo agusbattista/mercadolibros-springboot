@@ -11,13 +11,14 @@ import org.mapstruct.MappingTarget;
 public interface BookMapper {
 
   @Mapping(target = "id", ignore = true)
+  @Mapping(target = "uuid", ignore = true)
   @Mapping(target = "deleted", ignore = true)
   Book toEntity(BookRequestDTO request);
 
   BookResponseDTO toResponse(Book book);
 
   @Mapping(target = "id", ignore = true)
+  @Mapping(target = "uuid", ignore = true)
   @Mapping(target = "deleted", ignore = true)
-  @Mapping(target = "isbn", ignore = true)
   void updateEntityFromRequest(BookRequestDTO request, @MappingTarget Book entity);
 }
