@@ -15,6 +15,7 @@ import io.github.agusbattista.mercadolibros_springboot.repository.BookRepository
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +33,7 @@ class BookServiceImplTest {
 
   private final BookMapper bookMapper = new BookMapperImpl();
 
-  private BookServiceImpl bookService;
+  private BookService bookService;
 
   private BookRequestDTO bookRequest;
 
@@ -82,17 +83,17 @@ class BookServiceImplTest {
   }
 
   @Test
-  void save_WhenBookIsNull_ShouldThrowNullPointerException() {
-    assertThatThrownBy(() -> bookService.save(null)).isInstanceOf(NullPointerException.class);
+  void create_WhenBookIsNull_ShouldThrowNullPointerException() {
+    assertThatThrownBy(() -> bookService.create(null)).isInstanceOf(NullPointerException.class);
   }
 
   @Test
-  void save_WhenBookDoesNotExist_ShouldReturnSavedBook() {
+  void create_WhenBookDoesNotExist_ShouldReturnSavedBook() {
     when(bookRepository.findByIsbnIncludingDeleted(bookRequest.isbn()))
         .thenReturn(Optional.empty());
     when(bookRepository.save(any(Book.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    BookResponseDTO result = bookService.save(bookRequest);
+    BookResponseDTO result = bookService.create(bookRequest);
 
     assertThat(result.isbn()).isEqualTo(bookRequest.isbn());
     verify(bookRepository).findByIsbnIncludingDeleted(bookRequest.isbn());
@@ -100,26 +101,26 @@ class BookServiceImplTest {
   }
 
   @Test
-  void save_WhenBookExists_ShouldThrowDuplicateResourceException() {
+  void create_WhenBookExists_ShouldThrowDuplicateResourceException() {
     Book book = bookMapper.toEntity(bookRequest);
     book.setDeleted(false);
     when(bookRepository.findByIsbnIncludingDeleted(bookRequest.isbn()))
         .thenReturn(Optional.of(book));
 
-    assertThatThrownBy(() -> bookService.save(bookRequest))
+    assertThatThrownBy(() -> bookService.create(bookRequest))
         .isInstanceOf(DuplicateResourceException.class);
     verify(bookRepository).findByIsbnIncludingDeleted(bookRequest.isbn());
   }
 
   @Test
-  void save_WhenDeletedBookExists_ShouldReturnBook() {
+  void create_WhenDeletedBookExists_ShouldReturnBook() {
     Book book = bookMapper.toEntity(bookRequest);
     book.setDeleted(true);
     when(bookRepository.findByIsbnIncludingDeleted(bookRequest.isbn()))
         .thenReturn(Optional.of(book));
     when(bookRepository.save(any(Book.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    BookResponseDTO result = bookService.save(bookRequest);
+    BookResponseDTO result = bookService.create(bookRequest);
 
     assertThat(result.isbn()).isEqualTo(bookRequest.isbn());
     verify(bookRepository).findByIsbnIncludingDeleted(bookRequest.isbn());
@@ -127,71 +128,142 @@ class BookServiceImplTest {
   }
 
   @Test
-  void deleteByIsbn_WhenIsbnIsNull_ShouldThrowNullPointerException() {
-    assertThatThrownBy(() -> bookService.deleteByIsbn(null))
+  void deleteByUuid_WhenUuidIsNull_ShouldThrowNullPointerException() {
+    assertThatThrownBy(() -> bookService.deleteByUuid(null))
         .isInstanceOf(NullPointerException.class);
   }
 
   @Test
-  void deleteByIsbn_WhenIsbnExists_ShouldDeleteBook() {
+  void deleteByUuid_WhenUuidExists_ShouldDeleteBook() {
+    UUID uuid = UUID.randomUUID();
     Book book = bookMapper.toEntity(bookRequest);
-    when(bookRepository.findByIsbn(bookRequest.isbn())).thenReturn(Optional.of(book));
+    when(bookRepository.findByUuid(uuid)).thenReturn(Optional.of(book));
 
-    bookService.deleteByIsbn(bookRequest.isbn());
+    bookService.deleteByUuid(uuid);
 
-    verify(bookRepository).findByIsbn(bookRequest.isbn());
+    verify(bookRepository).findByUuid(uuid);
     verify(bookRepository).delete(book);
   }
 
   @Test
-  void deleteByIsbn_WhenIsbnDoesNotExist_ShouldThrowResourceNotFoundException() {
-    String isbn = "0000000000000";
-    when(bookRepository.findByIsbn(isbn)).thenReturn(Optional.empty());
+  void deleteByUuid_WhenUuidDoesNotExist_ShouldThrowResourceNotFoundException() {
+    UUID uuid = UUID.randomUUID();
+    when(bookRepository.findByUuid(uuid)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> bookService.deleteByIsbn(isbn))
+    assertThatThrownBy(() -> bookService.deleteByUuid(uuid))
         .isInstanceOf(ResourceNotFoundException.class);
 
-    verify(bookRepository).findByIsbn(isbn);
+    verify(bookRepository).findByUuid(uuid);
   }
 
   @Test
-  void update_WhenIsbnIsNull_ShouldThrowNullPointerException() {
+  void update_WhenUuidIsNull_ShouldThrowNullPointerException() {
     assertThatThrownBy(() -> bookService.update(null, bookRequest))
         .isInstanceOf(NullPointerException.class);
   }
 
   @Test
   void update_WhenRequestBookIsNull_ShouldThrowNullPointerException() {
-    String isbn = bookRequest.isbn();
-    assertThatThrownBy(() -> bookService.update(isbn, null))
+    UUID uuid = UUID.randomUUID();
+    assertThatThrownBy(() -> bookService.update(uuid, null))
         .isInstanceOf(NullPointerException.class);
   }
 
   @Test
   void update_WhenBookDoesNotExist_ShouldThrowResourceNotFoundException() {
-    String isbn = bookRequest.isbn();
-    when(bookRepository.findByIsbn(isbn)).thenReturn(Optional.empty());
+    UUID uuid = UUID.randomUUID();
+    when(bookRepository.findByUuid(uuid)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> bookService.update(isbn, bookRequest))
+    assertThatThrownBy(() -> bookService.update(uuid, bookRequest))
         .isInstanceOf(ResourceNotFoundException.class);
-    verify(bookRepository).findByIsbn(isbn);
+    verify(bookRepository).findByUuid(uuid);
   }
 
   @Test
   void update_WhenBookExists_ShouldUpdateBook() {
-    String isbn = bookRequest.isbn();
+    UUID uuid = UUID.randomUUID();
     Book book = bookMapper.toEntity(bookRequest);
+    book.setUuid(uuid);
     book.setTitle("Old title");
     String newTitle = bookRequest.title();
-    when(bookRepository.findByIsbn(isbn)).thenReturn(Optional.of(book));
+    when(bookRepository.findByUuid(uuid)).thenReturn(Optional.of(book));
     when(bookRepository.save(book)).thenReturn(book);
 
-    BookResponseDTO result = bookService.update(isbn, bookRequest);
+    BookResponseDTO result = bookService.update(uuid, bookRequest);
 
-    assertThat(result.isbn()).isEqualTo(isbn);
+    assertThat(result.uuid()).isEqualTo(uuid);
     assertThat(result.title()).isEqualTo(newTitle);
-    verify(bookRepository).findByIsbn(isbn);
+    verify(bookRepository).findByUuid(uuid);
     verify(bookRepository).save(book);
+  }
+
+  @Test
+  void update_WhenNewIsbnDoesNotExist_ShouldUpdateBook() {
+    UUID uuid = UUID.randomUUID();
+    Book book = bookMapper.toEntity(bookRequest);
+    book.setUuid(uuid);
+    String newIsbn = "9780321247148";
+    BookRequestDTO newBookRequest =
+        new BookRequestDTO(
+            newIsbn,
+            bookRequest.title(),
+            bookRequest.authors(),
+            bookRequest.price(),
+            bookRequest.description(),
+            bookRequest.publisher(),
+            bookRequest.genre(),
+            bookRequest.imageUrl());
+    when(bookRepository.findByUuid(uuid)).thenReturn(Optional.of(book));
+    when(bookRepository.findByIsbnIncludingDeleted(newIsbn)).thenReturn(Optional.empty());
+    when(bookRepository.save(any(Book.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    BookResponseDTO result = bookService.update(uuid, newBookRequest);
+
+    assertThat(result.uuid()).isEqualTo(uuid);
+    assertThat(result.isbn()).isEqualTo(newIsbn);
+    verify(bookRepository).findByUuid(uuid);
+    verify(bookRepository).findByIsbnIncludingDeleted(newIsbn);
+    verify(bookRepository).save(any(Book.class));
+  }
+
+  @Test
+  void update_WhenNewIsbnExists_ShouldThrowDuplicateResourceException() {
+    UUID uuid = UUID.randomUUID();
+    Book book = bookMapper.toEntity(bookRequest);
+    book.setUuid(uuid);
+    book.setDeleted(false);
+    String newIsbn = "9780321247148";
+    BookRequestDTO newBookRequest =
+        new BookRequestDTO(
+            newIsbn,
+            bookRequest.title(),
+            bookRequest.authors(),
+            bookRequest.price(),
+            bookRequest.description(),
+            bookRequest.publisher(),
+            bookRequest.genre(),
+            bookRequest.imageUrl());
+    Book otherBook =
+        bookMapper.toEntity(
+            new BookRequestDTO(
+                newIsbn,
+                "Refactoring",
+                "Martin Fowler",
+                new BigDecimal("57.99"),
+                "Una guía definitiva sobre cómo mejorar el diseño del código existente sin cambiar su comportamiento externo.",
+                "Addison-Wesley Professional",
+                "Tecnología",
+                "https://books.google.com/books/publisher/content?id=2H1_DwAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api"));
+    otherBook.setDeleted(true);
+    when(bookRepository.findByUuid(uuid)).thenReturn(Optional.of(book));
+    when(bookRepository.findByIsbnIncludingDeleted(newIsbn)).thenReturn(Optional.of(otherBook));
+
+    assertThatThrownBy(() -> bookService.update(uuid, newBookRequest))
+        .isInstanceOf(DuplicateResourceException.class);
+
+    verify(bookRepository).findByUuid(uuid);
+    verify(bookRepository).findByIsbnIncludingDeleted(newIsbn);
+    verify(bookRepository, times(0)).save(any(Book.class));
   }
 
   @Test
