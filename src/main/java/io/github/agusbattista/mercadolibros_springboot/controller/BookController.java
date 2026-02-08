@@ -3,14 +3,13 @@ package io.github.agusbattista.mercadolibros_springboot.controller;
 import io.github.agusbattista.mercadolibros_springboot.dto.BookRequestDTO;
 import io.github.agusbattista.mercadolibros_springboot.dto.BookResponseDTO;
 import io.github.agusbattista.mercadolibros_springboot.dto.PagedResponse;
-import io.github.agusbattista.mercadolibros_springboot.dto.ValidationGroups;
 import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoundException;
 import io.github.agusbattista.mercadolibros_springboot.service.BookService;
-import jakarta.validation.groups.Default;
+import jakarta.validation.Valid;
+import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,7 +37,17 @@ public class BookController {
     return ResponseEntity.ok(bookService.findAll(pageable));
   }
 
-  @GetMapping("/{isbn}")
+  @GetMapping("/{uuid}")
+  public ResponseEntity<BookResponseDTO> findByUuid(@PathVariable UUID uuid) {
+    BookResponseDTO book =
+        bookService
+            .findByUuid(uuid)
+            .orElseThrow(
+                () -> new ResourceNotFoundException("Libro con UUID: " + uuid + " no encontrado"));
+    return ResponseEntity.ok(book);
+  }
+
+  @GetMapping("/isbn/{isbn}")
   public ResponseEntity<BookResponseDTO> findByIsbn(@PathVariable String isbn) {
     BookResponseDTO book =
         bookService
@@ -60,20 +69,19 @@ public class BookController {
   }
 
   @PostMapping
-  public ResponseEntity<BookResponseDTO> save(
-      @Validated({ValidationGroups.Create.class, Default.class}) @RequestBody BookRequestDTO book) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(bookService.save(book));
+  public ResponseEntity<BookResponseDTO> create(@Valid @RequestBody BookRequestDTO book) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(bookService.create(book));
   }
 
-  @PutMapping("/{isbn}")
+  @PutMapping("/{uuid}")
   public ResponseEntity<BookResponseDTO> update(
-      @PathVariable String isbn, @Validated(Default.class) @RequestBody BookRequestDTO book) {
-    return ResponseEntity.ok(bookService.update(isbn, book));
+      @PathVariable UUID uuid, @Valid @RequestBody BookRequestDTO book) {
+    return ResponseEntity.ok(bookService.update(uuid, book));
   }
 
-  @DeleteMapping("/{isbn}")
-  public ResponseEntity<Void> delete(@PathVariable String isbn) {
-    bookService.deleteByIsbn(isbn);
+  @DeleteMapping("/{uuid}")
+  public ResponseEntity<Void> delete(@PathVariable UUID uuid) {
+    bookService.deleteByUuid(uuid);
     return ResponseEntity.noContent().build();
   }
 }
