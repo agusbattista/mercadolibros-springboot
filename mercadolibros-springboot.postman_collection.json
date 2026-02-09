@@ -12,9 +12,13 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{BASE_URL}}",
+          "raw": "{{BASE_URL}}/api/books",
           "host": [
             "{{BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "books"
           ],
           "query": [
             {
@@ -60,6 +64,23 @@
     },
     {
       "name": "create book",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    let jsonData = pm.response.json();",
+              "    pm.collectionVariables.set(\"UUID\", jsonData.uuid);",
+              "    pm.collectionVariables.set(\"ISBN\", jsonData.isbn);",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "protocolProfileBehavior": {
         "disabledSystemHeaders": {}
       },
@@ -68,7 +89,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"isbn\": \"9877184931\",\n  \"title\": \"Alicia en el país de las maravillas\",\n  \"authors\": \"Lewis Carroll\",\n  \"price\": 4.99,\n  \"description\": \"La historia de Alicia y su increíble viaje a un mundo fantástico lleno de personajes extraños y aventuras inolvidables.\",\n  \"publisher\": \"Ediciones LEA\",\n  \"genre\": \"Fantasía\",\n  \"imageUrl\": \"https://books.google.com/books/publisher/content?id=oDzZDgAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&imgtk=AFLRE73FY6i2kA8yM02QLs0Ym79IU6ei_8Kp-0xqqfJ2NnY85PAXixaVMV1oKzrwQ7OKTWl2ZxuE6npi6S-6E3cGkbOQfr0eID63-EMrdQVT42AKshoDdJQXCTH_xGRpCTMN29rECIla&source=gbs_api\"\n}\n",
+          "raw": "{\n    \"isbn\": \"9877184931\",\n    \"title\": \"Alicia en el país de las maravillas\",\n    \"authors\": \"Lewis Carroll\",\n    \"price\": 4.99,\n    \"description\": \"La historia de Alicia y su increíble viaje a un mundo fantástico lleno de personajes extraños y aventuras inolvidables.\",\n    \"publisher\": \"Ediciones LEA\",\n    \"genre\": \"Fantasía\",\n    \"imageUrl\": \"https://books.google.com/books/publisher/content?id=oDzZDgAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&imgtk=AFLRE73FY6i2kA8yM02QLs0Ym79IU6ei_8Kp-0xqqfJ2NnY85PAXixaVMV1oKzrwQ7OKTWl2ZxuE6npi6S-6E3cGkbOQfr0eID63-EMrdQVT42AKshoDdJQXCTH_xGRpCTMN29rECIla&source=gbs_api\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -76,12 +97,16 @@
           }
         },
         "url": {
-          "raw": "{{BASE_URL}}",
+          "raw": "{{BASE_URL}}/api/books",
           "host": [
             "{{BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "books"
           ]
         },
-        "description": "Crea un nuevo libro.\n\nEl isbn, título, autores, precio, descripción, editorial, género e imagen son obligatorios."
+        "description": "Crea un nuevo libro.\n\nEl isbn, título, autores, precio, descripción, editorial, género e imagen son obligatorios.\n\nAl crear un nuevo libro, el script de postman guarda el UUID e ISBN del libro. De esta manera, quedan listos para usar en los verbos PUT o DELETE."
       },
       "response": []
     },
@@ -91,15 +116,38 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{BASE_URL}}/{{ISBN}}",
+          "raw": "{{BASE_URL}}/api/books/isbn/{{ISBN}}",
           "host": [
             "{{BASE_URL}}"
           ],
           "path": [
+            "api",
+            "books",
+            "isbn",
             "{{ISBN}}"
           ]
         },
         "description": "Devuelve un libro en base a su ISBN."
+      },
+      "response": []
+    },
+    {
+      "name": "get book by uuid",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/books/{{UUID}}",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "books",
+            "{{UUID}}"
+          ]
+        },
+        "description": "Devuelve un libro en base a su UUID."
       },
       "response": []
     },
@@ -119,15 +167,17 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"title\": \"Alicia en el país de las maravillas MODIFICADO\",\n  \"authors\": \"Lewis Carroll\",\n  \"price\": 4.99,\n  \"description\": \"La historia de Alicia y su increíble viaje a un mundo fantástico lleno de personajes extraños y aventuras inolvidables.\",\n  \"publisher\": \"Ediciones LEA\",\n  \"genre\": \"Fantasía\",\n  \"imageUrl\": \"https://books.google.com/books/publisher/content?id=oDzZDgAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&imgtk=AFLRE73FY6i2kA8yM02QLs0Ym79IU6ei_8Kp-0xqqfJ2NnY85PAXixaVMV1oKzrwQ7OKTWl2ZxuE6npi6S-6E3cGkbOQfr0eID63-EMrdQVT42AKshoDdJQXCTH_xGRpCTMN29rECIla&source=gbs_api\"\n}"
+          "raw": "{\n    \"isbn\": \"9877184931\",\n    \"title\": \"Alicia en el país de las maravillas MODIFICADO\",\n    \"authors\": \"Lewis Carroll\",\n    \"price\": 4.99,\n    \"description\": \"La historia de Alicia y su increíble viaje a un mundo fantástico lleno de personajes extraños y aventuras inolvidables.\",\n    \"publisher\": \"Ediciones LEA\",\n    \"genre\": \"Fantasía\",\n    \"imageUrl\": \"https://books.google.com/books/publisher/content?id=oDzZDgAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&imgtk=AFLRE73FY6i2kA8yM02QLs0Ym79IU6ei_8Kp-0xqqfJ2NnY85PAXixaVMV1oKzrwQ7OKTWl2ZxuE6npi6S-6E3cGkbOQfr0eID63-EMrdQVT42AKshoDdJQXCTH_xGRpCTMN29rECIla&source=gbs_api\"\n}"
         },
         "url": {
-          "raw": "{{BASE_URL}}/{{ISBN}}",
+          "raw": "{{BASE_URL}}/api/books/{{UUID}}",
           "host": [
             "{{BASE_URL}}"
           ],
           "path": [
-            "{{ISBN}}"
+            "api",
+            "books",
+            "{{UUID}}"
           ],
           "query": [
             {
@@ -138,7 +188,7 @@
             }
           ]
         },
-        "description": "Actualiza un libro. El ISBN en el cuerpo de la petición no es necesario ya que se ignora."
+        "description": "Actualiza un libro."
       },
       "response": []
     },
@@ -148,15 +198,17 @@
         "method": "DELETE",
         "header": [],
         "url": {
-          "raw": "{{BASE_URL}}/{{ISBN}}",
+          "raw": "{{BASE_URL}}/api/books/{{UUID}}",
           "host": [
             "{{BASE_URL}}"
           ],
           "path": [
-            "{{ISBN}}"
+            "api",
+            "books",
+            "{{UUID}}"
           ]
         },
-        "description": "Elimina un libro a partir de su ISBN."
+        "description": "Elimina un libro a partir de su UUID."
       },
       "response": []
     },
@@ -166,11 +218,13 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{BASE_URL}}/search?genre=FANTASÍA&publisher=Janés",
+          "raw": "{{BASE_URL}}/api/books/search?genre=FANTASÍA&publisher=Janes",
           "host": [
             "{{BASE_URL}}"
           ],
           "path": [
+            "api",
+            "books",
             "search"
           ],
           "query": [
@@ -191,7 +245,7 @@
             },
             {
               "key": "publisher",
-              "value": "Janés"
+              "value": "Janes"
             },
             {
               "key": "title",
@@ -218,7 +272,6 @@
             {
               "key": "sort",
               "value": "price,asc",
-              "type": "text",
               "disabled": true
             }
           ]
@@ -228,16 +281,42 @@
       "response": []
     }
   ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
   "variable": [
     {
       "key": "BASE_URL",
-      "value": "",
-      "type": "default"
+      "value": "http://localhost:8080"
     },
     {
       "key": "ISBN",
-      "value": "",
-      "type": "default"
+      "value": ""
+    },
+    {
+      "key": "UUID",
+      "value": ""
     }
   ]
 }
