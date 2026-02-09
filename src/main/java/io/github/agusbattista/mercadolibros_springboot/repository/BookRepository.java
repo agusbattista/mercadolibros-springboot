@@ -2,6 +2,7 @@ package io.github.agusbattista.mercadolibros_springboot.repository;
 
 import io.github.agusbattista.mercadolibros_springboot.model.Book;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long> {
+
+  Optional<Book> findByUuid(UUID uuid);
 
   Optional<Book> findByIsbn(String isbn);
 
@@ -28,7 +31,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
       Pageable pageable);
 
   @Query(value = "SELECT * FROM books WHERE isbn = :isbn", nativeQuery = true)
-  Optional<Book> findByIsbnIncludingDeleted(String isbn);
+  Optional<Book> findByIsbnIncludingDeleted(@Param("isbn") String isbn);
 
   @Query(value = "SELECT COUNT(*) FROM books", nativeQuery = true)
   long countAllIncludingDeleted();

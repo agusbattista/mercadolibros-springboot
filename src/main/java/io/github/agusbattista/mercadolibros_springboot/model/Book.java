@@ -2,8 +2,12 @@ package io.github.agusbattista.mercadolibros_springboot.model;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "books")
@@ -14,6 +18,11 @@ public class Book {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
+
+  @UuidGenerator(style = UuidGenerator.Style.RANDOM)
+  @JdbcTypeCode(SqlTypes.VARCHAR)
+  @Column(unique = true, nullable = false, updatable = false)
+  private UUID uuid;
 
   @Column(unique = true, nullable = false)
   private String isbn;
@@ -56,6 +65,14 @@ public class Book {
 
   public void setId(Long id) {
     this.id = id;
+  }
+
+  public UUID getUuid() {
+    return uuid;
+  }
+
+  public void setUuid(UUID uuid) {
+    this.uuid = uuid;
   }
 
   public String getIsbn() {
@@ -134,7 +151,7 @@ public class Book {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof Book book)) return false;
-    return this.getIsbn() != null && this.getIsbn().equals(book.getIsbn());
+    return this.getUuid() != null && this.getUuid().equals(book.getUuid());
   }
 
   @Override

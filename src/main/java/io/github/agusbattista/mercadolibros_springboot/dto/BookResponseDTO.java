@@ -1,8 +1,10 @@
 package io.github.agusbattista.mercadolibros_springboot.dto;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record BookResponseDTO(
+    UUID uuid,
     String isbn,
     String title,
     String authors,

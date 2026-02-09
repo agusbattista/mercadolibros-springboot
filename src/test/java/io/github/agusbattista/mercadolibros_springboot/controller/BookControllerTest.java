@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +48,7 @@ class BookControllerTest {
   private PagedResponse<BookResponseDTO> pagedResponse;
 
   private static final String BASE_URL = "/api/books";
-  private static final String ISBN_PATH_VARIABLE = "/{isbn}";
+  private static final String UUID_PATH_VARIABLE = "/{uuid}";
 
   @BeforeEach
   void setUp() {
@@ -64,6 +65,7 @@ class BookControllerTest {
 
     bookResponse =
         new BookResponseDTO(
+            UUID.randomUUID(),
             "9786073155731",
             "Canción de Hielo y Fuego (Colección)",
             "George R. R. Martin",
@@ -94,6 +96,7 @@ class BookControllerTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.content").isArray())
         .andExpect(jsonPath("$.content.length()").value(1))
+        .andExpect(jsonPath("$.content[0].uuid").value(bookResponse.uuid().toString()))
         .andExpect(jsonPath("$.content[0].isbn").value(bookResponse.isbn()))
         .andExpect(jsonPath("$.page").value(0))
         .andExpect(jsonPath("$.size").value(5))
@@ -135,16 +138,51 @@ class BookControllerTest {
   }
 
   @Test
+  void findByUuid_WhenUuidExists_ShouldReturnBook() throws Exception {
+    UUID uuid = bookResponse.uuid();
+    String url = BASE_URL + UUID_PATH_VARIABLE;
+    when(bookService.findByUuid(uuid)).thenReturn(Optional.of(bookResponse));
+
+    mockMvc
+        .perform(get(url, uuid))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.uuid").value(uuid.toString()))
+        .andExpect(jsonPath("$.isbn").value(bookResponse.isbn()));
+
+    verify(bookService).findByUuid(uuid);
+  }
+
+  @Test
+  void findByUuid_WhenUuidDoesNotExists_ShouldThrowResourceNotFoundException() throws Exception {
+    UUID uuid = UUID.randomUUID();
+    String url = BASE_URL + UUID_PATH_VARIABLE;
+    when(bookService.findByUuid(uuid)).thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(get(url, uuid))
+        .andExpect(status().isNotFound())
+        .andExpect(
+            result ->
+                assertInstanceOf(ResourceNotFoundException.class, result.getResolvedException()))
+        .andExpect(jsonPath("$.status").value(404));
+
+    verify(bookService).findByUuid(uuid);
+  }
+
+  @Test
   void findByIsbn_WhenIsbnExists_ShouldReturnBook() throws Exception {
     String isbn = bookRequest.isbn();
-    String url = BASE_URL + "/" + isbn;
+    UUID uuid = bookResponse.uuid();
+    String url = BASE_URL + "/isbn/" + isbn;
     when(bookService.findByIsbn(isbn)).thenReturn(Optional.of(bookResponse));
 
     mockMvc
         .perform(get(url))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("isbn").value(isbn));
+        .andExpect(jsonPath("$.uuid").value(uuid.toString()))
+        .andExpect(jsonPath("$.isbn").value(bookResponse.isbn()));
 
     verify(bookService).findByIsbn(isbn);
   }
@@ -152,7 +190,7 @@ class BookControllerTest {
   @Test
   void findByIsbn_WhenIsbnDoesNotExist_ShouldThrowResourceNotFoundException() throws Exception {
     String isbn = "0000000000000";
-    String url = BASE_URL + "/" + isbn;
+    String url = BASE_URL + "/isbn/" + isbn;
     when(bookService.findByIsbn(isbn)).thenReturn(Optional.empty());
 
     mockMvc
@@ -168,6 +206,7 @@ class BookControllerTest {
   @Test
   void findBooksByCriteria_WhenParamsProvided_ShouldReturnFilteredPagedResponse() throws Exception {
     String isbn = bookResponse.isbn();
+    UUID uuid = bookResponse.uuid();
     String title = "Fuego";
     String genre = "Fantasía";
     String url = BASE_URL + "/search";
@@ -186,6 +225,7 @@ class BookControllerTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.content").isArray())
         .andExpect(jsonPath("$.content.length()").value(1))
+        .andExpect(jsonPath("$.content[0].uuid").value(uuid.toString()))
         .andExpect(jsonPath("$.content[0].isbn").value(isbn))
         .andExpect(jsonPath("$.page").value(0))
         .andExpect(jsonPath("$.size").value(5))
@@ -197,22 +237,22 @@ class BookControllerTest {
   }
 
   @Test
-  void save_WhenValidInput_ShouldReturnCreatedAndBook() throws Exception {
-    when(bookService.save(any(BookRequestDTO.class))).thenReturn(bookResponse);
+  void create_WhenValidInput_ShouldReturnCreatedAndBook() throws Exception {
+    when(bookService.create(any(BookRequestDTO.class))).thenReturn(bookResponse);
     String requestBody = objectMapper.writeValueAsString(bookRequest);
-    String isbn = bookResponse.isbn();
+    UUID uuid = bookResponse.uuid();
 
     mockMvc
         .perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(requestBody))
         .andExpect(status().isCreated())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.isbn").value(isbn));
+        .andExpect(jsonPath("$.uuid").value(uuid.toString()));
 
-    verify(bookService).save(any(BookRequestDTO.class));
+    verify(bookService).create(any(BookRequestDTO.class));
   }
 
   @Test
-  void save_WhenInvalidInput_ShouldReturnBadRequest() throws Exception {
+  void create_WhenInvalidInput_ShouldReturnBadRequest() throws Exception {
     BookRequestDTO invalidRequest =
         new BookRequestDTO(null, null, null, null, null, null, null, null);
     String requestBody = objectMapper.writeValueAsString(invalidRequest);
@@ -222,15 +262,14 @@ class BookControllerTest {
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errors").exists());
 
-    verify(bookService, times(0)).save(any());
+    verify(bookService, times(0)).create(any());
   }
 
   @Test
-  void save_WhenBookAlreadyExists_ShouldReturnConflict() throws Exception {
+  void create_WhenBookAlreadyExists_ShouldReturnConflict() throws Exception {
     String requestBody = objectMapper.writeValueAsString(bookRequest);
-    doThrow(new DuplicateResourceException("Libro duplicado"))
-        .when(bookService)
-        .save(any(BookRequestDTO.class));
+    when(bookService.create(any(BookRequestDTO.class)))
+        .thenThrow(new DuplicateResourceException("Libro duplicado"));
 
     mockMvc
         .perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(requestBody))
@@ -238,11 +277,11 @@ class BookControllerTest {
         .andExpect(jsonPath("$.status").value(409))
         .andExpect(jsonPath("$.message").exists());
 
-    verify(bookService).save(any(BookRequestDTO.class));
+    verify(bookService).create(any(BookRequestDTO.class));
   }
 
   @Test
-  void save_WhenMalformedJson_ShouldReturnBadRequest() throws Exception {
+  void create_WhenMalformedJson_ShouldReturnBadRequest() throws Exception {
     String invalidJson = "{ isbn: ";
 
     mockMvc
@@ -251,60 +290,65 @@ class BookControllerTest {
         .andExpect(jsonPath("$.status").value(400))
         .andExpect(jsonPath("$.message").exists());
 
-    verify(bookService, times(0)).save(any());
+    verify(bookService, times(0)).create(any());
   }
 
   @Test
   void update_WhenValidInput_ShouldReturnOkStatusAndUpdatedBook() throws Exception {
-    String url = BASE_URL + ISBN_PATH_VARIABLE;
-    String isbn = bookRequest.isbn();
+    String url = BASE_URL + UUID_PATH_VARIABLE;
+    UUID uuid = bookResponse.uuid();
     String requestBody = objectMapper.writeValueAsString(bookRequest);
-    when(bookService.update(eq(isbn), any(BookRequestDTO.class))).thenReturn(bookResponse);
+    when(bookService.update(eq(uuid), any(BookRequestDTO.class))).thenReturn(bookResponse);
 
     mockMvc
-        .perform(put(url, isbn).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        .perform(put(url, uuid).contentType(MediaType.APPLICATION_JSON).content(requestBody))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.isbn").value(isbn));
+        .andExpect(jsonPath("$.uuid").value(uuid.toString()));
 
-    verify(bookService).update(eq(isbn), any(BookRequestDTO.class));
+    verify(bookService).update(eq(uuid), any(BookRequestDTO.class));
   }
 
   @Test
   void update_WhenInvalidInput_ShouldReturnBadRequest() throws Exception {
-    String url = BASE_URL + ISBN_PATH_VARIABLE;
-    String isbn = bookRequest.isbn();
+    String url = BASE_URL + UUID_PATH_VARIABLE;
+    UUID uuid = bookResponse.uuid();
     BookRequestDTO invalidRequest =
         new BookRequestDTO(null, null, null, null, null, null, null, null);
     String requestBody = objectMapper.writeValueAsString(invalidRequest);
 
     mockMvc
-        .perform(put(url, isbn).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-        .andExpect(status().isBadRequest());
+        .perform(put(url, uuid).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.message").exists());
 
     verify(bookService, times(0)).update(any(), any());
   }
 
   @Test
-  void delete_WhenIsbnExists_ShouldReturnNoContentStatus() throws Exception {
-    String url = BASE_URL + ISBN_PATH_VARIABLE;
-    String isbn = bookRequest.isbn();
+  void delete_WhenUuidExists_ShouldReturnNoContentStatus() throws Exception {
+    String url = BASE_URL + UUID_PATH_VARIABLE;
+    UUID uuid = bookResponse.uuid();
 
-    mockMvc.perform(delete(url, isbn)).andExpect(status().isNoContent());
+    mockMvc.perform(delete(url, uuid)).andExpect(status().isNoContent());
 
-    verify(bookService).deleteByIsbn(isbn);
+    verify(bookService).deleteByUuid(uuid);
   }
 
   @Test
-  void delete_WhenIsbnDoesNotExist_ShouldReturnNotFound() throws Exception {
-    String url = BASE_URL + ISBN_PATH_VARIABLE;
-    String isbn = "0000000000000";
+  void delete_WhenUuidDoesNotExist_ShouldReturnNotFound() throws Exception {
+    String url = BASE_URL + UUID_PATH_VARIABLE;
+    UUID uuid = UUID.randomUUID();
     doThrow(new ResourceNotFoundException("Libro no encontrado"))
         .when(bookService)
-        .deleteByIsbn(isbn);
+        .deleteByUuid(uuid);
 
-    mockMvc.perform(delete(url, isbn)).andExpect(status().isNotFound());
+    mockMvc
+        .perform(delete(url, uuid))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.status").value(404));
 
-    verify(bookService).deleteByIsbn(isbn);
+    verify(bookService).deleteByUuid(uuid);
   }
 }

@@ -10,6 +10,7 @@ import io.github.agusbattista.mercadolibros_springboot.model.Book;
 import io.github.agusbattista.mercadolibros_springboot.repository.BookRepository;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,12 @@ public class BookServiceImpl implements BookService {
   }
 
   @Override
+  public Optional<BookResponseDTO> findByUuid(UUID uuid) {
+    Objects.requireNonNull(uuid, "El UUID no puede ser nulo para realizar la búsqueda");
+    return bookRepository.findByUuid(uuid).map(bookMapper::toResponse);
+  }
+
+  @Override
   public Optional<BookResponseDTO> findByIsbn(String isbn) {
     Objects.requireNonNull(isbn, "El ISBN no puede ser nulo para realizar la búsqueda");
     return bookRepository.findByIsbn(isbn).map(bookMapper::toResponse);
@@ -47,7 +54,7 @@ public class BookServiceImpl implements BookService {
 
   @Override
   @Transactional
-  public BookResponseDTO save(BookRequestDTO requestBook) {
+  public BookResponseDTO create(BookRequestDTO requestBook) {
     Objects.requireNonNull(requestBook, "El libro que quiere guardar no puede ser nulo");
     Optional<Book> optionalBook = bookRepository.findByIsbnIncludingDeleted(requestBook.isbn());
     if (optionalBook.isPresent()) {
@@ -67,34 +74,44 @@ public class BookServiceImpl implements BookService {
 
   @Override
   @Transactional
-  public void deleteByIsbn(String isbn) {
-    Objects.requireNonNull(isbn, "El ISBN no puede ser nulo para intentar la eliminación");
+  public void deleteByUuid(UUID uuid) {
+    Objects.requireNonNull(uuid, "El UUID no puede ser nulo para intentar la eliminación");
     Book book =
         bookRepository
-            .findByIsbn(isbn)
+            .findByUuid(uuid)
             .orElseThrow(
                 () ->
                     new ResourceNotFoundException(
-                        "No se puede eliminar. " + this.isbnNotFound(isbn)));
+                        "No se puede eliminar. " + this.uuidNotFound(uuid)));
     bookRepository.delete(book);
   }
 
   @Transactional
   @Override
-  public BookResponseDTO update(String isbn, BookRequestDTO requestBook) {
-    Objects.requireNonNull(isbn, "El ISBN no puede ser nulo");
+  public BookResponseDTO update(UUID uuid, BookRequestDTO requestBook) {
+    Objects.requireNonNull(uuid, "El UUID no puede ser nulo");
     Objects.requireNonNull(
         requestBook, "Los datos del libro que quiere actualizar no pueden ser nulos");
     Book existingBook =
         bookRepository
-            .findByIsbn(isbn)
-            .orElseThrow(() -> new ResourceNotFoundException(this.isbnNotFound(isbn)));
+            .findByUuid(uuid)
+            .orElseThrow(() -> new ResourceNotFoundException(this.uuidNotFound(uuid)));
+    if (!existingBook.getIsbn().equals(requestBook.isbn())) {
+      Optional<Book> duplicateCandidate =
+          bookRepository.findByIsbnIncludingDeleted(requestBook.isbn());
+      if (duplicateCandidate.isPresent()) {
+        throw new DuplicateResourceException(
+            "No se puede actualizar. El ISBN: "
+                + requestBook.isbn()
+                + " ya pertenece a otro libro");
+      }
+    }
     bookMapper.updateEntityFromRequest(requestBook, existingBook);
     return bookMapper.toResponse(bookRepository.save(existingBook));
   }
 
-  private String isbnNotFound(String isbn) {
-    return "Libro con ISBN: " + isbn + " no encontrado";
+  private String uuidNotFound(UUID uuid) {
+    return "Libro con UUID: " + uuid + " no encontrado";
   }
 
   private PagedResponse<BookResponseDTO> toPagedResponse(Page<Book> booksPage) {
