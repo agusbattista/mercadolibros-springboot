@@ -6,9 +6,9 @@ import io.github.agusbattista.mercadolibros_springboot.dto.PagedResponse;
 import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoundException;
 import io.github.agusbattista.mercadolibros_springboot.service.BookService;
 import jakarta.validation.Valid;
+import java.net.URI;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -70,7 +71,9 @@ public class BookController {
 
   @PostMapping
   public ResponseEntity<BookResponseDTO> create(@Valid @RequestBody BookRequestDTO book) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(bookService.create(book));
+    BookResponseDTO newBook = bookService.create(book);
+    URI uri = buildUri(newBook, "/{uuid}");
+    return ResponseEntity.created(uri).body(newBook);
   }
 
   @PutMapping("/{uuid}")
@@ -83,5 +86,12 @@ public class BookController {
   public ResponseEntity<Void> delete(@PathVariable UUID uuid) {
     bookService.deleteByUuid(uuid);
     return ResponseEntity.noContent().build();
+  }
+
+  private URI buildUri(BookResponseDTO book, String path) {
+    return ServletUriComponentsBuilder.fromCurrentRequest()
+        .path(path)
+        .buildAndExpand(book.uuid())
+        .toUri();
   }
 }
