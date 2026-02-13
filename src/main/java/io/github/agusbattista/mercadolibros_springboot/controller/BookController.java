@@ -72,7 +72,7 @@ public class BookController {
   @PostMapping
   public ResponseEntity<BookResponseDTO> create(@Valid @RequestBody BookRequestDTO book) {
     BookResponseDTO newBook = bookService.create(book);
-    URI uri = buildUri(newBook, "/{uuid}");
+    URI uri = buildUri(newBook);
     return ResponseEntity.created(uri).body(newBook);
   }
 
@@ -88,9 +88,9 @@ public class BookController {
     return ResponseEntity.noContent().build();
   }
 
-  private URI buildUri(BookResponseDTO book, String path) {
+  private URI buildUri(BookResponseDTO book) {
     return ServletUriComponentsBuilder.fromCurrentRequest()
-        .path(path)
+        .path("/{uuid}")
         .buildAndExpand(book.uuid())
         .toUri();
   }
