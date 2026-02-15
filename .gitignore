@@ -37,3 +37,6 @@ build/
 
 ### Sonarlint ###
 .sonarlint/
+
+### Environment variables ###
+.env

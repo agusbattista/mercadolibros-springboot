@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+
+# Maven local build
+target/
+.mvn/
+mvnw
+mvnw.cmd
+
+# IDE and text editors
+.settings/
+.classpath
+.project
+.idea/
+*.iml
+.vscode/
+
+# macOS hidden files
+.DS_Store
+
+# Logs and environment files
+*.log
+.env
+
+# Particular Files
+README.md
+HELP.md
+LICENSE
+browser-screenshot.jpg
+mercadolibros-springboot.postman_collection.json
+env.example
+
+# Docker configuration files
+docker-compose.yml
+docker-compose-*.yml
+
+# Temporal files
+*.tmp
+*.bak
+*.swp
+*~

@@ -2,14 +2,13 @@
 
 Este repositorio contiene una API REST hecha con Spring Boot que provee un CRUD de libros.
 
-<img src="browser-screenshot.jpg" width="65%">
+<img src="browser-screenshot.jpg" width="65%" alt="Captura de pantalla de la API en funcionamiento" />
 
-### Programas necesarios para ejecutarlo
+### Programa necesario para ejecutar la aplicación:
 
-1. JDK de Java 21
-2. Docker
+- Docker Desktop
 
-### Para ejecutarlo localmente
+### Para ejecutarla localmente
 
 1. Clonar el repositorio
 
@@ -23,7 +22,7 @@ git clone git@github.com:agusbattista/mercadolibros-springboot.git
 cd mercadolibros-springboot
 ```
 
-3. Levantar la base de datos con Docker
+3. Levantar la aplicación completa
 
 > [!IMPORTANT]
 > Docker Desktop debe estar corriendo antes de ejecutar el siguiente comando
@@ -32,11 +31,14 @@ cd mercadolibros-springboot
 docker compose up -d
 ```
 
-4. Ejecutar la aplicación
+ Este comando hará lo siguiente:
+ - Compilará el código Java con Maven
+ - Construirá la imagen de Docker para la aplicación
+ - Levantará todos los servicios (app + MySQL + phpMyAdmin)
 
-```bash
-./mvnw spring-boot:run
-```
+> [!NOTE]
+> La primera vez que se ejecute, el proceso puede tardar unos minutos ya que debe descargar las dependencias necesarias.
+> Una vez que se hayan descargado, las siguientes ejecuciones serán mucho más rápidas.
 
 ### Corroborar que funciona
 
@@ -46,8 +48,45 @@ La API estará disponible en:
 El panel phpMyAdmin estará disponible en:
 <http://localhost:8081>
 
-- Usuario: `root`
-- Contraseña: `root`
+> [!NOTE]
+> phpMyAdmin se conecta automáticamente con las credenciales configuradas en Docker Compose (por defecto: usuario `root`, contraseña `root`).
+
+### Personalización de credenciales (opcional)
+
+El proyecto viene configurado con credenciales por defecto para desarrollo local.
+
+Para configurar tus propias credenciales podes renombrar el archivo env.example a .env de la siguiente manera:
+
+```bash
+mv env.example .env
+```
+
+Luego, editar las variables a gusto.
+
+> [!NOTE] 
+> Si no se configuran estas variables, se utilizarán los valores por defecto definidos en **docker-compose.yml** y **application.properties**.
+
+### Ejecución híbrida (desarrollo avanzado)
+
+Si preferís ejecutar la aplicación con el JDK de Java 21 instalado en tu máquina y usar Docker sólo para la base de datos, podés hacer lo siguiente:
+
+1. Asegurarte de tener Java 21 instalado y configurado en tu sistema (sugiero temurin21).
+2. Levantar únicamente MySQL y/o phpMyAdmin (el panel phpMyAdmin es opcional, se puede utilizar DBeaver, MySQL Workbench o cualquier otro cliente de base de datos):
+
+```bash
+docker compose up -d mysql phpmyadmin
+```
+
+3. Ejecutar la aplicación con Maven:
+
+```bash
+./mvnw spring-boot:run
+```
+
+> [!NOTE]
+> Con este enfoque, la aplicación se conectará automáticamente a MySQL corriendo en Docker.
+> 
+> Es útil para desarrollar ya que los cambios en el código se ven reflejados automáticamente al compilar y volver a ejecutar sin necesidad de reconstruir la imagen Docker.
 
 ### Endpoints disponibles
 
@@ -112,9 +151,13 @@ Todos los endpoints que devuelven listas de libros (`GET /api/books` y `GET /api
 - `/api/books?page=0&size=3&sort=price,asc` - Primera página con 3 elementos, ordenados por precio ascendente
 - `/api/books/search?genre=Fantasía&page=0&size=2&sort=price,desc` - Búsqueda de género "Fantasía", primera página con 2 elementos, ordenados por precio descendente
 
-### Formato de un libro (ejemplo)
+#### Utilización de UUIDs
 
-La API devuelve el libro incluyendo su identificador único (uuid).
+Se implementaron identificadores únicos universales (UUID) para exponer los recursos. Principalmente por dos motivaciones:
+1. **Seguridad:** evita que los IDs autoincrementales de la base de datos sean públicos, previniendo la enumeración secuencial de recursos por parte de terceros.
+2. **Aprendizaje:** fue de utilidad como ejercicio de implementación técnica en Spring Boot.
+
+### Formato de un libro (ejemplo)
 
 ```JSON
 {
@@ -152,6 +195,15 @@ src/test/java/io/github/agusbattista/mercadolibros_springboot/config/BookDataLoa
 ```text
 src/main/resources/data/books.json
 ```
+### Sobre la base de datos
+
+En **application.properties** se utiliza la propiedad `spring.jpa.hibernate.ddl-auto=update`, lo que significa que Hibernate actualizará el esquema de la base de datos automáticamente según las entidades definidas en el código. Esto es útil para desarrollo, ya que permite que los cambios en las entidades se reflejen sin necesidad de ejecutar scripts SQL manualmente. 
+
+Para producción, se recomienda utilizar `validate` o `none` y gestionar las migraciones de la base de datos para tener un control más preciso sobre los cambios en el esquema.
+
+```code
+spring.jpa.hibernate.ddl-auto=update
+```
 
 ### Test
 
@@ -165,21 +217,29 @@ El proyecto contiene tests para las distintas capas de la aplicación. Se pueden
 
 El archivo **"mercadolibros-springboot.postman_collection.json"** provee una colección para Postman que puede ser importada y utilizada. La ventaja de este enfoque es que ya tiene los endpoints disponibles y ejemplos de que se espera para cada uno.
 
-### Detener los servicios
+### Comandos útiles
 
 ```bash
-# Detener la aplicación: Ctrl + C
-
 # Detener Docker Compose manteniendo los datos
 docker compose down
 
 # Detener Docker Compose y eliminar volúmenes (limpieza completa de los datos)
 docker compose down -v
+
+# Reconstruir la aplicación luego de modificar el código
+docker compose up -d --build
+
+# Ver logs de la aplicación en tu terminal
+docker compose logs -f app
+
+# Cerrar los logs
+# Ctrl + C en la terminal en la que se están mostrando
 ```
 
 ### Sobre el proyecto
 
 > [!IMPORTANT]
-> Este proyecto está en su primera versión.
->
-> Se pretende comenzar por lo más básico para luego poder iterar sobre ello, construyendo nuevas funcionalidades y mejorando las existentes.
+> - Está en su primera versión.
+> - Está **completamente dockerizado:** sólo necesitás Docker Desktop para ejecutarlo, sin configuraciones manuales de Java o bases de datos.
+> - Se pretende comenzar por lo más básico para luego poder iterar sobre ello, construyendo nuevas funcionalidades y mejorando las existentes. 
+> - Se demuestra lo aprendido a través de los avances del proyecto.
