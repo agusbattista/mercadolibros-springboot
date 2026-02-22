@@ -4,6 +4,7 @@ import io.github.agusbattista.mercadolibros_springboot.dto.GenreRequestDTO;
 import io.github.agusbattista.mercadolibros_springboot.dto.GenreResponseDTO;
 import io.github.agusbattista.mercadolibros_springboot.dto.PagedResponse;
 import io.github.agusbattista.mercadolibros_springboot.exception.DuplicateResourceException;
+import io.github.agusbattista.mercadolibros_springboot.exception.ResourceInUseException;
 import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoundException;
 import io.github.agusbattista.mercadolibros_springboot.mapper.GenreMapper;
 import io.github.agusbattista.mercadolibros_springboot.model.Genre;
@@ -46,13 +47,17 @@ public class GenreServiceImpl implements GenreService {
   @Override
   public Optional<GenreResponseDTO> findByCode(String code) {
     Objects.requireNonNull(code, "El código no puede ser nulo para realizar la búsqueda");
-    return genreRepository.findByCode(code).map(genreMapper::toResponse);
+    return genreRepository
+        .findByCode(StringFormatter.generateCode(code))
+        .map(genreMapper::toResponse);
   }
 
   @Override
   public Optional<GenreResponseDTO> findByName(String name) {
     Objects.requireNonNull(name, "El nombre no puede ser nulo para realizar la búsqueda");
-    return genreRepository.findByName(StringFormatter.formatName(name)).map(genreMapper::toResponse);
+    return genreRepository
+        .findByName(StringFormatter.formatName(name))
+        .map(genreMapper::toResponse);
   }
 
   @Override
@@ -84,13 +89,18 @@ public class GenreServiceImpl implements GenreService {
   @Transactional
   public void deleteById(Long id) {
     Objects.requireNonNull(id, "El ID no puede ser nulo para realizar la eliminación");
-    // TODO: Lógica para eliminar el género, verificando que no tenga libros asociados
     Genre genre =
         genreRepository
             .findById(id)
             .orElseThrow(
                 () ->
                     new ResourceNotFoundException("No se puede eliminar. " + this.idNotFound(id)));
+    if (bookRepository.countByGenreIdIncludingDeleted(id) > 0) {
+      throw new ResourceInUseException(
+          "No se puede eliminar el género: "
+              + genre.getName()
+              + " porque existen libros asociados a él en el catálogo actual o en el registro histórico");
+    }
     genreRepository.delete(genre);
   }
 

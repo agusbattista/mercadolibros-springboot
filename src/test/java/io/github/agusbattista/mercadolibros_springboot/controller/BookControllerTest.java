@@ -19,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.agusbattista.mercadolibros_springboot.dto.BookRequestDTO;
 import io.github.agusbattista.mercadolibros_springboot.dto.BookResponseDTO;
+import io.github.agusbattista.mercadolibros_springboot.dto.GenreResponseDTO;
 import io.github.agusbattista.mercadolibros_springboot.dto.PagedResponse;
 import io.github.agusbattista.mercadolibros_springboot.exception.DuplicateResourceException;
 import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoundException;
@@ -60,8 +61,10 @@ class BookControllerTest {
             new BigDecimal("33.99"),
             "La saga completa de Canción de Hielo y Fuego, la obra maestra de la fantasía moderna.",
             "Plaza & Janés",
-            "Fantasía",
+            1L,
             "https://books.google.com/books/publisher/content?id=krMsDwAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api");
+
+    GenreResponseDTO genreResponse = new GenreResponseDTO(1L, "FANTASIA", "Fantasía");
 
     bookResponse =
         new BookResponseDTO(
@@ -72,7 +75,7 @@ class BookControllerTest {
             new BigDecimal("33.99"),
             "La saga completa de Canción de Hielo y Fuego, la obra maestra de la fantasía moderna.",
             "Plaza & Janés",
-            "Fantasía",
+            genreResponse,
             "https://books.google.com/books/publisher/content?id=krMsDwAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api");
 
     pagedResponse =
@@ -98,6 +101,7 @@ class BookControllerTest {
         .andExpect(jsonPath("$.content.length()").value(1))
         .andExpect(jsonPath("$.content[0].uuid").value(bookResponse.uuid().toString()))
         .andExpect(jsonPath("$.content[0].isbn").value(bookResponse.isbn()))
+        .andExpect(jsonPath("$.content[0].genre.id").value(1))
         .andExpect(jsonPath("$.page").value(0))
         .andExpect(jsonPath("$.size").value(5))
         .andExpect(jsonPath("$.totalElements").value(1))
@@ -148,7 +152,8 @@ class BookControllerTest {
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.uuid").value(uuid.toString()))
-        .andExpect(jsonPath("$.isbn").value(bookResponse.isbn()));
+        .andExpect(jsonPath("$.isbn").value(bookResponse.isbn()))
+        .andExpect(jsonPath("$.genre.id").value(1));
 
     verify(bookService).findByUuid(uuid);
   }
@@ -182,7 +187,8 @@ class BookControllerTest {
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.uuid").value(uuid.toString()))
-        .andExpect(jsonPath("$.isbn").value(bookResponse.isbn()));
+        .andExpect(jsonPath("$.isbn").value(bookResponse.isbn()))
+        .andExpect(jsonPath("$.genre.id").value(1));
 
     verify(bookService).findByIsbn(isbn);
   }
@@ -227,6 +233,7 @@ class BookControllerTest {
         .andExpect(jsonPath("$.content.length()").value(1))
         .andExpect(jsonPath("$.content[0].uuid").value(uuid.toString()))
         .andExpect(jsonPath("$.content[0].isbn").value(isbn))
+        .andExpect(jsonPath("$.content[0].genre.name").value("Fantasía"))
         .andExpect(jsonPath("$.page").value(0))
         .andExpect(jsonPath("$.size").value(5))
         .andExpect(jsonPath("$.totalElements").value(1))
@@ -246,7 +253,8 @@ class BookControllerTest {
         .perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(requestBody))
         .andExpect(status().isCreated())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.uuid").value(uuid.toString()));
+        .andExpect(jsonPath("$.uuid").value(uuid.toString()))
+        .andExpect(jsonPath("$.genre.id").value(1));
 
     verify(bookService).create(any(BookRequestDTO.class));
   }
@@ -304,7 +312,8 @@ class BookControllerTest {
         .perform(put(url, uuid).contentType(MediaType.APPLICATION_JSON).content(requestBody))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.uuid").value(uuid.toString()));
+        .andExpect(jsonPath("$.uuid").value(uuid.toString()))
+        .andExpect(jsonPath("$.genre.id").value(1));
 
     verify(bookService).update(eq(uuid), any(BookRequestDTO.class));
   }

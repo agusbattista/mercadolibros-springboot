@@ -1,16 +1,18 @@
 package io.github.agusbattista.mercadolibros_springboot.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.agusbattista.mercadolibros_springboot.mapper.BookMapper;
-import io.github.agusbattista.mercadolibros_springboot.mapper.BookMapperImpl;
 import io.github.agusbattista.mercadolibros_springboot.model.Book;
+import io.github.agusbattista.mercadolibros_springboot.model.Genre;
 import io.github.agusbattista.mercadolibros_springboot.repository.BookRepository;
+import io.github.agusbattista.mercadolibros_springboot.repository.GenreRepository;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,18 +25,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class BookDataLoaderTest {
 
   @Mock private BookRepository bookRepository;
-  private final BookMapper bookMapper = new BookMapperImpl();
+  @Mock private GenreRepository genreRepository;
   private final ObjectMapper objectMapper = new ObjectMapper();
   private BookDataLoader bookDataLoader;
 
   @BeforeEach
   void setUp() {
-    bookDataLoader = new BookDataLoader(bookRepository, bookMapper, objectMapper);
+    bookDataLoader = new BookDataLoader(bookRepository, genreRepository, objectMapper);
   }
 
   @Test
   void run_WhenDatabaseIsEmpty_ShouldLoadBooks() throws Exception {
     when(bookRepository.countAllIncludingDeleted()).thenReturn(0L);
+    when(genreRepository.save(any(Genre.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
     bookDataLoader.run();
 
@@ -45,6 +49,7 @@ class BookDataLoaderTest {
 
     assertThat(savedBooks).isNotEmpty();
     assertThat(savedBooks.getFirst().getTitle()).isNotBlank();
+    assertThat(savedBooks.getFirst().getGenre()).isNotNull();
     verify(bookRepository).countAllIncludingDeleted();
   }
 
@@ -56,5 +61,6 @@ class BookDataLoaderTest {
 
     verify(bookRepository).countAllIncludingDeleted();
     verify(bookRepository, never()).saveAll(anyList());
+    verifyNoInteractions(genreRepository);
   }
 }

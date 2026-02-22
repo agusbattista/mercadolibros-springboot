@@ -10,6 +10,10 @@ public class StringFormatter {
     return text.trim().toLowerCase();
   }
 
+  private static String toUpperCaseAndTrim(String text) {
+    return text.trim().toUpperCase();
+  }
+
   private static String[] splitString(String text) {
     return text.split("\\s+");
   }
@@ -38,10 +42,10 @@ public class StringFormatter {
 
   public static String generateCode(String text) {
     if (text == null || text.isBlank()) return "";
-    String lowercaseAndTrimmed = toLowerCaseAndTrim(text);
-    String normalized = Normalizer.normalize(lowercaseAndTrimmed, Normalizer.Form.NFD);
+    String uppercaseAndTrimmed = toUpperCaseAndTrim(text);
+    String normalized = Normalizer.normalize(uppercaseAndTrimmed, Normalizer.Form.NFD);
     String withoutAccents = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
-    String slug = withoutAccents.replaceAll("[^a-z0-9]+", "-");
-    return slug.replaceAll("(^-+)|(-+$)", "");
+    String snakeCase = withoutAccents.replaceAll("[^A-Z0-9]+", "_");
+    return snakeCase.replaceAll("(^_+)|(_+$)", "");
   }
 }

@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -17,6 +19,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
   // Recurso no encontrado (404)
   @ExceptionHandler(ResourceNotFoundException.class)
@@ -31,6 +35,12 @@ public class GlobalExceptionHandler {
     return this.buildResponse(HttpStatus.CONFLICT, ex.getMessage());
   }
 
+  // Recurso en uso (409)
+  @ExceptionHandler(ResourceInUseException.class)
+  public ResponseEntity<Map<String, Object>> handleResourceInUse(ResourceInUseException ex) {
+    return this.buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+  }
+
   // Argumentos ilegales (400)
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
@@ -41,6 +51,7 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(HttpMessageNotReadableException.class)
   public ResponseEntity<Map<String, Object>> handleMalformedJson(
       HttpMessageNotReadableException ex) {
+    log.warn("JSON inválido recibido: {}", ex.getMessage());
     return buildResponse(
         HttpStatus.BAD_REQUEST, "El cuerpo de la petición está vacío o es inválido");
   }
@@ -86,6 +97,7 @@ public class GlobalExceptionHandler {
   // Error global (500)
   @ExceptionHandler(Exception.class)
   public ResponseEntity<Map<String, Object>> handleGlobalException(Exception ex) {
+    log.error("Ocurrió un error interno inesperado:", ex);
     return buildResponse(
         HttpStatus.INTERNAL_SERVER_ERROR,
         "Ocurrió un error interno inesperado. Por favor contacte al soporte");

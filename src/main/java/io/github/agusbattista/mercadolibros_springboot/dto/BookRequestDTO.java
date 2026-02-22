@@ -3,6 +3,7 @@ package io.github.agusbattista.mercadolibros_springboot.dto;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
@@ -38,9 +39,9 @@ public record BookRequestDTO(
     @NotBlank(message = "La editorial es obligatoria")
         @Size(max = 255, message = "La editorial no puede superar los 255 caracteres")
         String publisher,
-    @NotBlank(message = "El género es obligatorio")
-        @Size(max = 100, message = "El género no puede superar los 100 caracteres")
-        String genre,
+    @NotNull(message = "El género es obligatorio")
+        @Positive(message = "El ID del género debe ser un número positivo")
+        Long genreId,
     @NotBlank(message = "La URL de la imagen es obligatoria")
         @URL(message = "La URL de la imagen debe ser válida")
         @Size(max = 500, message = "La URL de la imagen no puede superar los 500 caracteres")
