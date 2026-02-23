@@ -21,10 +21,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
   private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+  private static final String INTERNAL_SERVER_ERROR_MESSAGE =
+      "Ocurrió un error interno inesperado. Por favor contacte al soporte";
 
   // Recurso no encontrado (404)
   @ExceptionHandler(ResourceNotFoundException.class)
   public ResponseEntity<Map<String, Object>> handleResourceNotFound(ResourceNotFoundException ex) {
+    log.warn("Recurso no encontrado: {}", ex.getMessage());
     return this.buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
   }
 
@@ -32,18 +35,21 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(DuplicateResourceException.class)
   public ResponseEntity<Map<String, Object>> handleDuplicateResource(
       DuplicateResourceException ex) {
+    log.warn("Recurso duplicado: {}", ex.getMessage());
     return this.buildResponse(HttpStatus.CONFLICT, ex.getMessage());
   }
 
   // Recurso en uso (409)
   @ExceptionHandler(ResourceInUseException.class)
   public ResponseEntity<Map<String, Object>> handleResourceInUse(ResourceInUseException ex) {
+    log.warn("Recurso en uso: {}", ex.getMessage());
     return this.buildResponse(HttpStatus.CONFLICT, ex.getMessage());
   }
 
   // Argumentos ilegales (400)
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
+    log.warn("Argumento/s ilegal/es: {}", ex.getMessage());
     return this.buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
   }
 
@@ -91,16 +97,15 @@ public class GlobalExceptionHandler {
       }
       return buildValidationResponse(fieldErrors);
     }
-    return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno de transacción");
+    log.error("Error interno de transacción:", rootCause != null ? rootCause : ex);
+    return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR_MESSAGE);
   }
 
   // Error global (500)
   @ExceptionHandler(Exception.class)
   public ResponseEntity<Map<String, Object>> handleGlobalException(Exception ex) {
     log.error("Ocurrió un error interno inesperado:", ex);
-    return buildResponse(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Ocurrió un error interno inesperado. Por favor contacte al soporte");
+    return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR_MESSAGE);
   }
 
   private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {
