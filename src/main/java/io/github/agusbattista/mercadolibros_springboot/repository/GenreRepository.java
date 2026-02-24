@@ -12,8 +12,6 @@ public interface GenreRepository extends JpaRepository<Genre, Long> {
 
   Optional<Genre> findByCode(String code);
 
-  Optional<Genre> findByName(String name);
-
   @Query(value = "SELECT * FROM genres WHERE code = :code", nativeQuery = true)
   Optional<Genre> findByCodeIncludingDeleted(@Param("code") String code);
 
