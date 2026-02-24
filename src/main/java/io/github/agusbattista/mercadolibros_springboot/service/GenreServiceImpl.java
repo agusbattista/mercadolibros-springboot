@@ -56,7 +56,7 @@ public class GenreServiceImpl implements GenreService {
   public Optional<GenreResponseDTO> findByName(String name) {
     Objects.requireNonNull(name, "El nombre no puede ser nulo para realizar la búsqueda");
     return genreRepository
-        .findByName(StringFormatter.formatName(name))
+        .findByCode(StringFormatter.generateCode(name))
         .map(genreMapper::toResponse);
   }
 
