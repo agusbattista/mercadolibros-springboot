@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -130,7 +131,8 @@ class BookControllerTest {
 
   @Test
   void findAll_WhenUnexpectedErrorOccurs_ShouldReturnInternalServerError() throws Exception {
-    when(bookService.findAll(any(Pageable.class))).thenThrow(new RuntimeException("DB crashed"));
+    when(bookService.findAll(any(Pageable.class)))
+        .thenThrow(new RuntimeException("Ocurrió un error interno. Contacte al soporte"));
 
     mockMvc
         .perform(get(BASE_URL))
@@ -233,7 +235,7 @@ class BookControllerTest {
         .andExpect(jsonPath("$.content.length()").value(1))
         .andExpect(jsonPath("$.content[0].uuid").value(uuid.toString()))
         .andExpect(jsonPath("$.content[0].isbn").value(isbn))
-        .andExpect(jsonPath("$.content[0].genre.name").value("Fantasía"))
+        .andExpect(jsonPath("$.content[0].genre.name").value(genre))
         .andExpect(jsonPath("$.page").value(0))
         .andExpect(jsonPath("$.size").value(5))
         .andExpect(jsonPath("$.totalElements").value(1))
@@ -252,6 +254,8 @@ class BookControllerTest {
     mockMvc
         .perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(requestBody))
         .andExpect(status().isCreated())
+        .andExpect(header().exists("Location"))
+        .andExpect(header().string("Location", org.hamcrest.Matchers.endsWith(uuid.toString())))
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.uuid").value(uuid.toString()))
         .andExpect(jsonPath("$.genre.id").value(1));
