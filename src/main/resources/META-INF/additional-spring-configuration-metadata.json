@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "api.version",
+      "type": "java.lang.String",
+      "description": "Versión actual de la API. Inyectada desde el POM.xml."
+    },
+    {
+      "name": "springboot.version",
+      "type": "java.lang.String",
+      "description": "Versión actual de Spring Boot. Inyectada desde el POM.xml."
+    }
+  ]
+}

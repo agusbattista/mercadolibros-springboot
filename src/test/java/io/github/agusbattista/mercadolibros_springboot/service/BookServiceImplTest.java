@@ -10,8 +10,12 @@ import io.github.agusbattista.mercadolibros_springboot.exception.DuplicateResour
 import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoundException;
 import io.github.agusbattista.mercadolibros_springboot.mapper.BookMapper;
 import io.github.agusbattista.mercadolibros_springboot.mapper.BookMapperImpl;
+import io.github.agusbattista.mercadolibros_springboot.mapper.GenreMapper;
+import io.github.agusbattista.mercadolibros_springboot.mapper.GenreMapperImpl;
 import io.github.agusbattista.mercadolibros_springboot.model.Book;
+import io.github.agusbattista.mercadolibros_springboot.model.Genre;
 import io.github.agusbattista.mercadolibros_springboot.repository.BookRepository;
+import io.github.agusbattista.mercadolibros_springboot.repository.GenreRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -30,16 +34,25 @@ import org.springframework.data.domain.Pageable;
 class BookServiceImplTest {
 
   @Mock private BookRepository bookRepository;
+  @Mock private GenreRepository genreRepository;
 
-  private final BookMapper bookMapper = new BookMapperImpl();
+  private final GenreMapper genreMapper = new GenreMapperImpl();
+  private final BookMapper bookMapper = new BookMapperImpl(genreMapper);
 
   private BookService bookService;
 
   private BookRequestDTO bookRequest;
 
+  private Genre genre;
+
   @BeforeEach
   void setUp() {
-    bookService = new BookServiceImpl(bookRepository, bookMapper);
+    bookService = new BookServiceImpl(bookRepository, bookMapper, genreRepository);
+
+    genre = new Genre();
+    genre.setId(1L);
+    genre.setName("Fantasía");
+    genre.setCode("FANTASIA");
 
     bookRequest =
         new BookRequestDTO(
@@ -49,7 +62,7 @@ class BookServiceImplTest {
             new BigDecimal("33.99"),
             "La saga completa de Canción de Hielo y Fuego, la obra maestra de la fantasía moderna.",
             "Plaza & Janés",
-            "Fantasía",
+            1L,
             "https://books.google.com/books/publisher/content?id=krMsDwAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api");
   }
 
@@ -62,6 +75,7 @@ class BookServiceImplTest {
   void findByIsbn_WhenIsbnExists_ShouldReturnBook() {
     String isbn = bookRequest.isbn();
     Book book = bookMapper.toEntity(bookRequest);
+    book.setGenre(genre);
     when(bookRepository.findByIsbn(isbn)).thenReturn(Optional.of(book));
 
     Optional<BookResponseDTO> result = bookService.findByIsbn(isbn);
@@ -88,7 +102,19 @@ class BookServiceImplTest {
   }
 
   @Test
+  void create_WhenGenreDoesNotExist_ShouldThrowResourceNotFoundException() {
+    when(genreRepository.findById(bookRequest.genreId())).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> bookService.create(bookRequest))
+        .isInstanceOf(ResourceNotFoundException.class);
+
+    verify(genreRepository).findById(bookRequest.genreId());
+    verifyNoInteractions(bookRepository);
+  }
+
+  @Test
   void create_WhenBookDoesNotExist_ShouldReturnSavedBook() {
+    when(genreRepository.findById(bookRequest.genreId())).thenReturn(Optional.of(genre));
     when(bookRepository.findByIsbnIncludingDeleted(bookRequest.isbn()))
         .thenReturn(Optional.empty());
     when(bookRepository.save(any(Book.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -96,12 +122,14 @@ class BookServiceImplTest {
     BookResponseDTO result = bookService.create(bookRequest);
 
     assertThat(result.isbn()).isEqualTo(bookRequest.isbn());
+    verify(genreRepository).findById(bookRequest.genreId());
     verify(bookRepository).findByIsbnIncludingDeleted(bookRequest.isbn());
     verify(bookRepository).save(any(Book.class));
   }
 
   @Test
   void create_WhenBookExists_ShouldThrowDuplicateResourceException() {
+    when(genreRepository.findById(bookRequest.genreId())).thenReturn(Optional.of(genre));
     Book book = bookMapper.toEntity(bookRequest);
     book.setDeleted(false);
     when(bookRepository.findByIsbnIncludingDeleted(bookRequest.isbn()))
@@ -109,11 +137,15 @@ class BookServiceImplTest {
 
     assertThatThrownBy(() -> bookService.create(bookRequest))
         .isInstanceOf(DuplicateResourceException.class);
+
+    verify(genreRepository).findById(bookRequest.genreId());
     verify(bookRepository).findByIsbnIncludingDeleted(bookRequest.isbn());
+    verify(bookRepository, times(0)).save(any(Book.class));
   }
 
   @Test
   void create_WhenDeletedBookExists_ShouldReturnBook() {
+    when(genreRepository.findById(bookRequest.genreId())).thenReturn(Optional.of(genre));
     Book book = bookMapper.toEntity(bookRequest);
     book.setDeleted(true);
     when(bookRepository.findByIsbnIncludingDeleted(bookRequest.isbn()))
@@ -123,6 +155,7 @@ class BookServiceImplTest {
     BookResponseDTO result = bookService.create(bookRequest);
 
     assertThat(result.isbn()).isEqualTo(bookRequest.isbn());
+    verify(genreRepository).findById(bookRequest.genreId());
     verify(bookRepository).findByIsbnIncludingDeleted(bookRequest.isbn());
     verify(bookRepository).save(argThat(savedBook -> !savedBook.isDeleted()));
   }
@@ -172,20 +205,37 @@ class BookServiceImplTest {
   @Test
   void update_WhenBookDoesNotExist_ShouldThrowResourceNotFoundException() {
     UUID uuid = UUID.randomUUID();
+    when(genreRepository.findById(bookRequest.genreId())).thenReturn(Optional.of(genre));
     when(bookRepository.findByUuid(uuid)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> bookService.update(uuid, bookRequest))
         .isInstanceOf(ResourceNotFoundException.class);
+    verify(genreRepository).findById(bookRequest.genreId());
     verify(bookRepository).findByUuid(uuid);
+    verify(bookRepository, times(0)).save(any(Book.class));
+  }
+
+  @Test
+  void update_WhenGenreDoesNotExist_ShouldThrowResourceNotFoundException() {
+    UUID uuid = UUID.randomUUID();
+    when(genreRepository.findById(bookRequest.genreId())).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> bookService.update(uuid, bookRequest))
+        .isInstanceOf(ResourceNotFoundException.class);
+
+    verify(genreRepository).findById(bookRequest.genreId());
+    verifyNoInteractions(bookRepository);
   }
 
   @Test
   void update_WhenBookExists_ShouldUpdateBook() {
     UUID uuid = UUID.randomUUID();
     Book book = bookMapper.toEntity(bookRequest);
+    book.setGenre(genre);
     book.setUuid(uuid);
     book.setTitle("Old title");
     String newTitle = bookRequest.title();
+    when(genreRepository.findById(bookRequest.genreId())).thenReturn(Optional.of(genre));
     when(bookRepository.findByUuid(uuid)).thenReturn(Optional.of(book));
     when(bookRepository.save(book)).thenReturn(book);
 
@@ -193,26 +243,33 @@ class BookServiceImplTest {
 
     assertThat(result.uuid()).isEqualTo(uuid);
     assertThat(result.title()).isEqualTo(newTitle);
+    assertThat(result.genre().id()).isEqualTo(genre.getId());
+    verify(genreRepository).findById(bookRequest.genreId());
     verify(bookRepository).findByUuid(uuid);
     verify(bookRepository).save(book);
+  }
+
+  private BookRequestDTO createNewBookRequestWithIsbn(String newIsbn) {
+    return new BookRequestDTO(
+        newIsbn,
+        bookRequest.title(),
+        bookRequest.authors(),
+        bookRequest.price(),
+        bookRequest.description(),
+        bookRequest.publisher(),
+        bookRequest.genreId(),
+        bookRequest.imageUrl());
   }
 
   @Test
   void update_WhenNewIsbnDoesNotExist_ShouldUpdateBook() {
     UUID uuid = UUID.randomUUID();
     Book book = bookMapper.toEntity(bookRequest);
+    book.setGenre(genre);
     book.setUuid(uuid);
     String newIsbn = "9780321247148";
-    BookRequestDTO newBookRequest =
-        new BookRequestDTO(
-            newIsbn,
-            bookRequest.title(),
-            bookRequest.authors(),
-            bookRequest.price(),
-            bookRequest.description(),
-            bookRequest.publisher(),
-            bookRequest.genre(),
-            bookRequest.imageUrl());
+    BookRequestDTO newBookRequest = createNewBookRequestWithIsbn(newIsbn);
+    when(genreRepository.findById(newBookRequest.genreId())).thenReturn(Optional.of(genre));
     when(bookRepository.findByUuid(uuid)).thenReturn(Optional.of(book));
     when(bookRepository.findByIsbnIncludingDeleted(newIsbn)).thenReturn(Optional.empty());
     when(bookRepository.save(any(Book.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -221,6 +278,8 @@ class BookServiceImplTest {
 
     assertThat(result.uuid()).isEqualTo(uuid);
     assertThat(result.isbn()).isEqualTo(newIsbn);
+    assertThat(result.genre().id()).isEqualTo(genre.getId());
+    verify(genreRepository).findById(bookRequest.genreId());
     verify(bookRepository).findByUuid(uuid);
     verify(bookRepository).findByIsbnIncludingDeleted(newIsbn);
     verify(bookRepository).save(any(Book.class));
@@ -233,16 +292,7 @@ class BookServiceImplTest {
     book.setUuid(uuid);
     book.setDeleted(false);
     String newIsbn = "9780321247148";
-    BookRequestDTO newBookRequest =
-        new BookRequestDTO(
-            newIsbn,
-            bookRequest.title(),
-            bookRequest.authors(),
-            bookRequest.price(),
-            bookRequest.description(),
-            bookRequest.publisher(),
-            bookRequest.genre(),
-            bookRequest.imageUrl());
+    BookRequestDTO newBookRequest = createNewBookRequestWithIsbn(newIsbn);
     Book otherBook =
         bookMapper.toEntity(
             new BookRequestDTO(
@@ -252,15 +302,21 @@ class BookServiceImplTest {
                 new BigDecimal("57.99"),
                 "Una guía definitiva sobre cómo mejorar el diseño del código existente sin cambiar su comportamiento externo.",
                 "Addison-Wesley Professional",
-                "Tecnología",
+                2L,
                 "https://books.google.com/books/publisher/content?id=2H1_DwAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api"));
     otherBook.setDeleted(true);
+    Genre techGenre = new Genre();
+    techGenre.setId(2L);
+    techGenre.setName("Tecnología");
+    techGenre.setCode("TECNOLOGIA");
+    when(genreRepository.findById(newBookRequest.genreId())).thenReturn(Optional.of(techGenre));
     when(bookRepository.findByUuid(uuid)).thenReturn(Optional.of(book));
     when(bookRepository.findByIsbnIncludingDeleted(newIsbn)).thenReturn(Optional.of(otherBook));
 
     assertThatThrownBy(() -> bookService.update(uuid, newBookRequest))
         .isInstanceOf(DuplicateResourceException.class);
 
+    verify(genreRepository).findById(newBookRequest.genreId());
     verify(bookRepository).findByUuid(uuid);
     verify(bookRepository).findByIsbnIncludingDeleted(newIsbn);
     verify(bookRepository, times(0)).save(any(Book.class));
@@ -270,6 +326,7 @@ class BookServiceImplTest {
   void findlAll_Paged_ShouldReturnPagedResponse() {
     Pageable pageable = PageRequest.of(0, 10);
     Book book = bookMapper.toEntity(bookRequest);
+    book.setGenre(genre);
     Page<Book> booksPage = new PageImpl<>(List.of(book), pageable, 1);
     when(bookRepository.findAll(pageable)).thenReturn(booksPage);
 
@@ -278,6 +335,7 @@ class BookServiceImplTest {
     assertThat(response).isNotNull();
     assertThat(response.content()).hasSize(1);
     assertThat(response.content().getFirst().isbn()).isEqualTo(bookRequest.isbn());
+    assertThat(response.content().getFirst().genre().id()).isEqualTo(bookRequest.genreId());
     assertThat(response.page()).isZero();
     assertThat(response.totalElements()).isEqualTo(1);
     assertThat(response.totalPages()).isEqualTo(1);
@@ -289,6 +347,7 @@ class BookServiceImplTest {
     String title = "Hielo";
     Pageable pageable = PageRequest.of(0, 5);
     Book book = bookMapper.toEntity(bookRequest);
+    book.setGenre(genre);
     Page<Book> booksPage = new PageImpl<>(List.of(book), pageable, 1);
     when(bookRepository.findBooksByCriteria(title, null, null, null, pageable))
         .thenReturn(booksPage);
@@ -302,6 +361,7 @@ class BookServiceImplTest {
     assertThat(response.totalElements()).isEqualTo(1);
     assertThat(response.totalPages()).isEqualTo(1);
     assertThat(response.content().getFirst().title()).isEqualTo(bookRequest.title());
+    assertThat(response.content().getFirst().genre().id()).isEqualTo(bookRequest.genreId());
     verify(bookRepository).findBooksByCriteria(title, null, null, null, pageable);
   }
 

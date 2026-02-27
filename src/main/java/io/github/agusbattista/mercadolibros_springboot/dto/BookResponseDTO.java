@@ -11,5 +11,5 @@ public record BookResponseDTO(
     BigDecimal price,
     String description,
     String publisher,
-    String genre,
+    GenreResponseDTO genre,
     String imageUrl) {}

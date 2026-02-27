@@ -49,8 +49,9 @@ public class Book {
   @Column(nullable = false)
   private String publisher;
 
-  @Column(nullable = false, length = 100)
-  private String genre;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "genre_id", nullable = false)
+  private Genre genre;
 
   @Column(nullable = false, length = 500)
   private String imageUrl;
@@ -123,11 +124,11 @@ public class Book {
     this.publisher = publisher;
   }
 
-  public String getGenre() {
+  public Genre getGenre() {
     return genre;
   }
 
-  public void setGenre(String genre) {
+  public void setGenre(Genre genre) {
     this.genre = genre;
   }
 

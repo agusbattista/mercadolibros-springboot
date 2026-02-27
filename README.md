@@ -1,6 +1,6 @@
 ## MercadoLibros REST API
 
-Este repositorio contiene una API REST hecha con Spring Boot que provee un CRUD de libros.
+Este repositorio contiene una API REST hecha con Spring Boot que provee un CRUD de libros y sus géneros literarios.
 
 <img src="browser-screenshot.jpg" width="65%" alt="Captura de pantalla de la API en funcionamiento" />
 
@@ -44,6 +44,7 @@ docker compose up -d
 
 La API estará disponible en:
 <http://localhost:8080/api/books>
+<http://localhost:8080/api/genres>
 
 El panel phpMyAdmin estará disponible en:
 <http://localhost:8081>
@@ -90,6 +91,7 @@ docker compose up -d mysql phpmyadmin
 
 ### Endpoints disponibles
 
+#### Libros (/api/books)
 - `GET /api/books` - Listar todos los libros
 - `GET /api/books/{uuid}` - Obtener un libro por su UUID
 - `GET /api/books/isbn/{isbn}` - Obtener un libro por ISBN
@@ -97,7 +99,7 @@ docker compose up -d mysql phpmyadmin
   - **Parámetros opcionales (query params):**
     - `title` - Buscar por título (búsqueda parcial, no es sensible a mayúsculas y minúsculas)
     - `authors` - Buscar por autores (búsqueda parcial, no es sensible a mayúsculas y minúsculas)
-    - `genre` - Buscar por género (búsqueda exacta, no es sensible a mayúsculas y minúsculas)
+    - `genre` - Buscar por género (búsqueda exacta por nombre, no es sensible a mayúsculas y minúsculas)
     - `publisher` - Buscar por editorial (búsqueda parcial, no es sensible a mayúsculas y minúsculas)
   - **Ejemplos:**
     - `/api/books/search?title=Design%20Patterns` - Libros cuyo título contenga "design patterns"
@@ -107,16 +109,40 @@ docker compose up -d mysql phpmyadmin
 - `PUT /api/books/{uuid}` - Actualizar un libro
 - `DELETE /api/books/{uuid}` - Eliminar un libro (borrado lógico / soft delete)
 
+#### Géneros (/api/genres)
+- `GET /api/genres` - Listar todos los géneros literarios
+- `GET /api/genres/{id}` - Obtener un género por su ID
+- `GET /api/genres/code/{code}` - Obtener un género por su código exacto. Por ejemplo: CIENCA_FICCION (no es sensible a mayúsculas y minúsculas)
+- `GET /api/genres/search` - Buscar un género por su nombre.
+  - **Ejemplo de búsqueda por nombre:**
+    - `/api/genres/search?name=ciencia%20ficcion` - Buscar género por su nombre (busqueda exacta, no es sensible a mayúsculas y minúsculas)
+- `POST /api/genres` - Crear un género literario
+- `PUT /api/genres/{id}` - Actualizar un género existente
+- `DELETE /api/genres/{id}` - Eliminar un género (borrado lógico / soft delete)
+
 > [!NOTE] 
-> La API utiliza UUID como identificador para las operaciones de modificación y búsqueda específica.
+> La API utiliza UUID como identificador para las operaciones de modificación y búsqueda específica en libros y un ID autoincremental para los géneros.
 >
 > Al crear un libro, el sistema le asigna un UUID (que se incluye en la respuesta) para futuras consultas o modificaciones.
 >
 > Si intenta crear un libro con un ISBN que existe pero fue eliminado lógicamente, el sistema lo restaurará y actualizará sus datos.
+> 
+> Al crear un género, el sistema le asigna un ID para futuras consultas o modificaciones.
+> 
+> Si intenta crear un género con un código que existe pero fue eliminado lógicamente, el sistema lo restaurará y actualizará sus datos.
+
+### Normalización de Géneros
+
+Para evitar la creación de géneros duplicados por errores de tipeo o diferencias en mayúsculas y minúsculas, la API implementa una normalización estricta al crear o actualizar géneros:
+- Formateo: un nombre ingresado como `   cIenCia  FiCcÍon  ` es convertido automáticamente a `Ciencia Ficción`
+- Código único: a partir del nombre se genera un código único en mayúsculas y con guiones bajos. Por ejemplo: `Ciencia Ficción` se convierte en `CIENCIA_FICCION`. Este código es utilizado para búsquedas exactas y para evitar duplicados
+
+### Integridad referencial entre libros y géneros
+- Borrado protegido: no se permite eliminar un género si existen libros en el catálogo (activos o eliminados lógicamente) que estén asociados a él. En dicho caso, la API devolverá un error con su mensaje y código correspondiente
 
 ### Paginación y ordenamiento
 
-Todos los endpoints que devuelven listas de libros (`GET /api/books` y `GET /api/books/search`) soportan paginación y ordenamiento mediante query params.
+Todos los endpoints que devuelven listas de libros (`GET /api/books`, `GET /api/books/search` y `GET /api/genres`) soportan paginación y ordenamiento mediante query params.
 
 #### Parámetros de paginación
 
@@ -144,18 +170,24 @@ Todos los endpoints que devuelven listas de libros (`GET /api/books` y `GET /api
 
 #### Ordenamiento múltiple:
 
-- `/api/books?sort=genre,asc&sort=price,desc` - Ordenar por género ascendente, luego por precio descendente
+- `/api/books?sort=genre.name,asc&sort=price,desc` - Ordenar por género ascendente, luego por precio descendente
 
 #### Combinando paginación y ordenamiento:
 
 - `/api/books?page=0&size=3&sort=price,asc` - Primera página con 3 elementos, ordenados por precio ascendente
 - `/api/books/search?genre=Fantasía&page=0&size=2&sort=price,desc` - Búsqueda de género "Fantasía", primera página con 2 elementos, ordenados por precio descendente
 
-#### Utilización de UUIDs
+#### Utilización de UUIDs en libros
 
 Se implementaron identificadores únicos universales (UUID) para exponer los recursos. Principalmente por dos motivaciones:
 1. **Seguridad:** evita que los IDs autoincrementales de la base de datos sean públicos, previniendo la enumeración secuencial de recursos por parte de terceros.
 2. **Aprendizaje:** fue de utilidad como ejercicio de implementación técnica en Spring Boot.
+
+### Utilización de ID autoincremental en géneros
+
+En el caso de los géneros, se utiliza un ID autoincremental por dos motivos:
+1. **Simplicidad:** dado que los géneros son una cantidad limitada y no se espera que sean expuestos públicamente, el uso de un ID autoincremental es más sencillo de implementar y manejar.
+2. **Aprendizaje:** fue útil como ejercicio de implementación técnica en Spring Boot, permitiendo contrastarla con la implementación de UUIDs en los libros detallada anteriormente.
 
 ### Formato de un libro (ejemplo)
 
@@ -168,14 +200,18 @@ Se implementaron identificadores únicos universales (UUID) para exponer los rec
   "price": 8.99,
   "description": "La novela distópica más famosa sobre el totalitarismo y la vigilancia masiva.",
   "publisher": "Debolsillo",
-  "genre": "Ficción",
+  "genre": {
+    "id": 4,
+    "code": "FICCION",
+    "name": "Ficción"
+  },
   "imageUrl": "https://books.google.com/books/publisher/content?id=H8Y1EQAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api"
 }
 ```
 
 ### Datos de prueba
 
-El proyecto contiene un **CommandLineRunner** que carga diez libros con datos de prueba. Esto ocurre la primera vez que se ejecuta la aplicación o que se corren los test.
+El proyecto contiene un **CommandLineRunner** que carga géneros y libros con datos de prueba. Esto ocurre la primera vez que se ejecuta la aplicación o que se corren los test.
 
 Si la base de datos ya contiene elementos (aunque estén eliminados lógicamente), no se agregarán libros.
 
@@ -207,7 +243,7 @@ spring.jpa.hibernate.ddl-auto=update
 
 ### Test
 
-El proyecto contiene tests para las distintas capas de la aplicación. Se pueden ejecutar con el siguiente comando:
+El proyecto contiene tests para las distintas capas de la aplicación (Controller, Service, Repository) así como para otras clases relevantes. Se pueden ejecutar con el siguiente comando:
 
 ```bash
 ./mvnw test
@@ -234,6 +270,9 @@ docker compose logs -f app
 
 # Cerrar los logs
 # Ctrl + C en la terminal en la que se están mostrando
+
+# Correr todos los test, excepto el que levanta el contexto de Spring Boot (útil para desarrollo ágil)
+./mvnw test -Dtest='*,!MercadolibrosSpringbootApplicationTests'
 ```
 
 ### Sobre el proyecto

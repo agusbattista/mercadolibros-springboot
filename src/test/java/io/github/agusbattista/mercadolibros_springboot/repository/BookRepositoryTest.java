@@ -3,6 +3,7 @@ package io.github.agusbattista.mercadolibros_springboot.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.agusbattista.mercadolibros_springboot.model.Book;
+import io.github.agusbattista.mercadolibros_springboot.model.Genre;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,11 @@ class BookRepositoryTest {
 
   @BeforeEach
   void setUp() {
+    Genre genre1 = new Genre();
+    genre1.setName("Fantasía");
+    genre1.setCode("FANTASIA");
+    entityManager.persist(genre1);
+
     book1 = new Book();
     book1.setIsbn("9786073155731");
     book1.setTitle("Canción de Hielo y Fuego (Colección)");
@@ -36,7 +42,7 @@ class BookRepositoryTest {
     book1.setDescription(
         "La saga completa de Canción de Hielo y Fuego, la obra maestra de la fantasía moderna.");
     book1.setPublisher("Plaza & Janés");
-    book1.setGenre("Fantasía");
+    book1.setGenre(genre1);
     book1.setImageUrl(
         "https://books.google.com/books/publisher/content?id=krMsDwAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api");
     entityManager.persist(book1);
@@ -48,7 +54,7 @@ class BookRepositoryTest {
     book2.setPrice(new BigDecimal("12.99"));
     book2.setDescription("La primera parte de la historia de la Guerra del Anillo.");
     book2.setPublisher("Minotauro");
-    book2.setGenre("Fantasía");
+    book2.setGenre(genre1);
     book2.setImageUrl(
         "https://books.google.com/books/content?id=DYmUGGwZ8_oC&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api");
     entityManager.persist(book2);
@@ -61,7 +67,7 @@ class BookRepositoryTest {
     book3.setDescription(
         "La historia de Kvothe, músico, mendigo, ladrón, estudiante, mago, héroe y asesino.");
     book3.setPublisher("Plaza & Janés");
-    book3.setGenre("Fantasía");
+    book3.setGenre(genre1);
     book3.setImageUrl(
         "https://books.google.com/books/publisher/content?id=IZWWDwAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api");
     entityManager.persist(book3);
@@ -109,7 +115,7 @@ class BookRepositoryTest {
   @Test
   void findBooksByCriteria_ByGenre_ShouldReturnMatchingBooks() {
     Page<Book> found =
-        bookRepository.findBooksByCriteria(null, null, "FANTASÍA", null, Pageable.unpaged());
+        bookRepository.findBooksByCriteria(null, null, "Fantasía", null, Pageable.unpaged());
     assertThat(found.getContent()).hasSize(3);
   }
 
@@ -137,18 +143,33 @@ class BookRepositoryTest {
   @Test
   void findBooksByCriteria_WithMultipleCriteria_ShouldFilterCorrectly() {
     Page<Book> found =
-        bookRepository.findBooksByCriteria(null, null, "FANTASÍA", "Janés", Pageable.unpaged());
+        bookRepository.findBooksByCriteria(null, null, "Fantasía", "Janés", Pageable.unpaged());
     assertThat(found.getContent())
         .hasSize(2)
         .extracting(Book::getTitle)
         .containsExactlyInAnyOrder("Canción de Hielo y Fuego (Colección)", "El nombre del viento");
     Page<Book> otherFound =
-        bookRepository.findBooksByCriteria("viento", null, "FANTASÍA", "Janés", Pageable.unpaged());
+        bookRepository.findBooksByCriteria("viento", null, "Fantasía", "Janés", Pageable.unpaged());
     assertThat(otherFound.getContent()).hasSize(1);
     Page<Book> otherFound2 =
         bookRepository.findBooksByCriteria(
-            "viento", "patricK", "FANTASÍA", "Janés", Pageable.unpaged());
+            "viento", "patricK", "Fantasía", "Janés", Pageable.unpaged());
     assertThat(otherFound2.getContent()).hasSize(1);
+  }
+
+  @Test
+  void findBooksByCriteria_CaseInsensitiveSearch_ShouldReturnMatchingBooks() {
+    Page<Book> foundByTitle =
+        bookRepository.findBooksByCriteria("hIeLo", null, null, null, Pageable.unpaged());
+    assertThat(foundByTitle.getContent()).hasSize(1);
+
+    Page<Book> foundByAuthor =
+        bookRepository.findBooksByCriteria(null, "tOLkiEn", null, null, Pageable.unpaged());
+    assertThat(foundByAuthor.getContent()).hasSize(1);
+
+    Page<Book> foundByPublisher =
+        bookRepository.findBooksByCriteria(null, null, null, "jANés", Pageable.unpaged());
+    assertThat(foundByPublisher.getContent()).hasSize(2);
   }
 
   @Test
@@ -194,12 +215,17 @@ class BookRepositoryTest {
 
   @Test
   void findBooksByCriteria_Paged_WithFilters_ShouldCountOnlyMatchingBooks() {
+    Genre genre2 = new Genre();
+    genre2.setName("Cocina");
+    genre2.setCode("COCINA");
+    entityManager.persist(genre2);
+
     Book distractorBook = new Book();
     distractorBook.setIsbn("1111111111111");
     distractorBook.setTitle("Libro de Cocina");
     distractorBook.setAuthors("Chef X");
     distractorBook.setPrice(new BigDecimal("10.00"));
-    distractorBook.setGenre("Cocina");
+    distractorBook.setGenre(genre2);
     distractorBook.setPublisher("Editorial X");
     distractorBook.setDescription("Recetas...");
     distractorBook.setImageUrl("http://image.url");
@@ -207,12 +233,43 @@ class BookRepositoryTest {
     entityManager.flush();
 
     Pageable pageable = PageRequest.of(0, 2);
-    Page<Book> found = bookRepository.findBooksByCriteria(null, null, "FANTASÍA", null, pageable);
+    Page<Book> found = bookRepository.findBooksByCriteria(null, null, "Fantasía", null, pageable);
 
     assertThat(found.getTotalElements()).isEqualTo(3);
     assertThat(found.getContent()).hasSize(2);
     assertThat(found.isLast()).isFalse();
-    assertThat(found.getContent()).extracting(Book::getGenre).containsOnly("Fantasía");
+    assertThat(found.getContent()).extracting(b -> b.getGenre().getName()).containsOnly("Fantasía");
+  }
+
+  private void persistNewBook() {
+    Genre genre2 = new Genre();
+    genre2.setName("Ciencia Ficción");
+    genre2.setCode("CIENCIA_FICCION");
+    entityManager.persist(genre2);
+
+    Book book4 = new Book();
+    book4.setIsbn("9788466353779");
+    book4.setTitle("Dune");
+    book4.setAuthors("Frank Herbert");
+    book4.setPrice(new BigDecimal("14.99"));
+    book4.setDescription(
+        "La mayor epopeya de ciencia ficción de todos los tiempos ambientada en Arrakis.");
+    book4.setPublisher("Debolsillo");
+    book4.setGenre(genre2);
+    book4.setImageUrl(
+        "https://books.google.com/books/publisher/content?id=uf5NEAAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api");
+    entityManager.persist(book4);
+    entityManager.flush();
+  }
+
+  @Test
+  void findBooksByCriteria_Paged_AndSortedByGenreName_ShouldOrderResults() {
+    persistNewBook();
+    Pageable pageable = PageRequest.of(0, 5, Sort.by("genre.name").ascending());
+
+    Page<Book> found = bookRepository.findAll(pageable);
+
+    assertThat(found.getContent().getFirst().getGenre().getName()).isEqualTo("Ciencia Ficción");
   }
 
   @Test
@@ -269,5 +326,60 @@ class BookRepositoryTest {
     entityManager.flush();
 
     assertThat(bookRepository.countAllIncludingDeleted()).isZero();
+  }
+
+  private Book saveNewTechBook(Genre genre3) {
+    Book book = new Book();
+    book.setIsbn("9780134757599");
+    book.setTitle("Refactoring");
+    book.setAuthors("Martin Fowler");
+    book.setPrice(new BigDecimal("57.99"));
+    book.setGenre(genre3);
+    book.setPublisher("Addison-Wesley Professional");
+    book.setDescription(
+        "Una guía definitiva sobre cómo mejorar el diseño del código existente sin cambiar su comportamiento externo.");
+    book.setImageUrl(
+        "https://books.google.com/books/publisher/content?id=2H1_DwAAQBAJ&printsec=frontcover&img=1&zoom=4&edge=curl&source=gbs_api");
+    Book savedBook = entityManager.persist(book);
+    entityManager.flush();
+    return savedBook;
+  }
+
+  @Test
+  void countByGenreIdIncludingDeleted_WhenDatabaseIsEmpty_ShouldReturnZero() {
+    entityManager.getEntityManager().createQuery("DELETE FROM Book").executeUpdate();
+    entityManager.flush();
+
+    assertThat(bookRepository.countByGenreIdIncludingDeleted(1L)).isZero();
+  }
+
+  @Test
+  void countByGenreIdIncludingDeleted_WhenNoAssociatedBooksExist_ShouldReturnZero() {
+    assertThat(bookRepository.countByGenreIdIncludingDeleted(999L)).isZero();
+  }
+
+  @Test
+  void countByGenreIdIncludingDeleted_WhenOneBookIsAssociated_ShouldReturnOne() {
+    Genre genreTech = new Genre();
+    genreTech.setCode("TECNOLOGIA");
+    genreTech.setName("Tecnología");
+    entityManager.persist(genreTech);
+    saveNewTechBook(genreTech);
+
+    assertThat(bookRepository.countByGenreIdIncludingDeleted(genreTech.getId())).isEqualTo(1);
+  }
+
+  @Test
+  void countByGenreIdIncludingDeleted_WhenOneBookIsSoftDeletedAndAssociated_ShouldReturnOne() {
+    Genre genreTech = new Genre();
+    genreTech.setCode("TECNOLOGIA");
+    genreTech.setName("Tecnología");
+    entityManager.persist(genreTech);
+    Book techBook = saveNewTechBook(genreTech);
+    techBook.setDeleted(true);
+    entityManager.persist(techBook);
+    entityManager.flush();
+
+    assertThat(bookRepository.countByGenreIdIncludingDeleted(genreTech.getId())).isEqualTo(1);
   }
 }
