@@ -8,6 +8,7 @@ import io.github.agusbattista.mercadolibros_springboot.service.BookService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -25,13 +26,10 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/books")
+@RequiredArgsConstructor
 public class BookController {
 
   private final BookService bookService;
-
-  public BookController(BookService bookService) {
-    this.bookService = bookService;
-  }
 
   @GetMapping
   public ResponseEntity<PagedResponse<BookResponseDTO>> findAll(Pageable pageable) {
@@ -72,7 +70,7 @@ public class BookController {
   @PostMapping
   public ResponseEntity<BookResponseDTO> create(@Valid @RequestBody BookRequestDTO book) {
     BookResponseDTO newBook = bookService.create(book);
-    URI uri = buildUri(newBook);
+    URI uri = this.buildUri(newBook);
     return ResponseEntity.created(uri).body(newBook);
   }
 
