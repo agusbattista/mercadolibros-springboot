@@ -7,6 +7,7 @@ import io.github.agusbattista.mercadolibros_springboot.exception.ResourceNotFoun
 import io.github.agusbattista.mercadolibros_springboot.service.GenreService;
 import jakarta.validation.Valid;
 import java.net.URI;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -24,13 +25,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/genres")
+@RequiredArgsConstructor
 public class GenreController {
 
+  private static final String NOT_FOUND_MESSAGE = " no encontrado";
   private final GenreService genreService;
-
-  public GenreController(GenreService genreService) {
-    this.genreService = genreService;
-  }
 
   @GetMapping
   public ResponseEntity<PagedResponse<GenreResponseDTO>> findAll(Pageable pageable) {
@@ -43,7 +42,7 @@ public class GenreController {
         genreService
             .findById(id)
             .orElseThrow(
-                () -> new ResourceNotFoundException("Género con ID: " + id + " no encontrado"));
+                () -> new ResourceNotFoundException("Género con ID: " + id + NOT_FOUND_MESSAGE));
     return ResponseEntity.ok(genre);
   }
 
@@ -54,7 +53,8 @@ public class GenreController {
             .findByCode(code)
             .orElseThrow(
                 () ->
-                    new ResourceNotFoundException("Género con código: " + code + " no encontrado"));
+                    new ResourceNotFoundException(
+                        "Género con código: " + code + NOT_FOUND_MESSAGE));
     return ResponseEntity.ok(genre);
   }
 
@@ -65,14 +65,15 @@ public class GenreController {
             .findByName(name)
             .orElseThrow(
                 () ->
-                    new ResourceNotFoundException("Género con nombre: " + name + " no encontrado"));
+                    new ResourceNotFoundException(
+                        "Género con nombre: " + name + NOT_FOUND_MESSAGE));
     return ResponseEntity.ok(genre);
   }
 
   @PostMapping
   public ResponseEntity<GenreResponseDTO> create(@Valid @RequestBody GenreRequestDTO genre) {
     GenreResponseDTO newGenre = genreService.create(genre);
-    URI uri = buildUri(newGenre);
+    URI uri = this.buildUri(newGenre);
     return ResponseEntity.created(uri).body(newGenre);
   }
 
@@ -88,10 +89,10 @@ public class GenreController {
     return ResponseEntity.noContent().build();
   }
 
-  private URI buildUri(GenreResponseDTO book) {
+  private URI buildUri(GenreResponseDTO genre) {
     return ServletUriComponentsBuilder.fromCurrentRequest()
         .path("/{id}")
-        .buildAndExpand(book.id())
+        .buildAndExpand(genre.id())
         .toUri();
   }
 }
