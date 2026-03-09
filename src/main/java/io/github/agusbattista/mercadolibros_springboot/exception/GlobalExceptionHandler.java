@@ -3,24 +3,23 @@ package io.github.agusbattista.mercadolibros_springboot.exception;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.transaction.TransactionSystemException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
-  private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
   private static final String INTERNAL_SERVER_ERROR_MESSAGE =
       "Ocurrió un error interno inesperado. Por favor contacte al soporte";
 
@@ -58,28 +57,26 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, Object>> handleMalformedJson(
       HttpMessageNotReadableException ex) {
     log.warn("JSON inválido recibido: {}", ex.getMessage());
-    return buildResponse(
+    return this.buildResponse(
         HttpStatus.BAD_REQUEST, "El cuerpo de la petición está vacío o es inválido");
   }
 
   /*
    * Error de validación (400) - @Valid en el controller.
    * Extrae campo por campo que falló.
-   * Ejemplo: "price: debe ser mayor a cero".
+   * Ejemplo: "price: debe ser mayor o igual a cero".
    * Los fallos de cada campo se agrupan en un array.
    */
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<Map<String, Object>> handleValidationErrors(
       MethodArgumentNotValidException ex) {
-    Map<String, List<String>> fieldErrors = new HashMap<>();
-    ex.getBindingResult()
-        .getFieldErrors()
-        .forEach(
-            error ->
-                fieldErrors
-                    .computeIfAbsent(error.getField(), key -> new ArrayList<>())
-                    .add(error.getDefaultMessage()));
-    return buildValidationResponse(fieldErrors);
+    Map<String, List<String>> fieldErrors =
+        ex.getBindingResult().getFieldErrors().stream()
+            .collect(
+                Collectors.groupingBy(
+                    FieldError::getField,
+                    Collectors.mapping(FieldError::getDefaultMessage, Collectors.toList())));
+    return this.buildValidationResponse(fieldErrors);
   }
 
   // Bad Request (400) para errores de validación al querer persistir o Error interno (500)
@@ -88,43 +85,53 @@ public class GlobalExceptionHandler {
       TransactionSystemException ex) {
     Throwable rootCause = ex.getRootCause();
     if (rootCause instanceof ConstraintViolationException constraintViolationException) {
-      Map<String, List<String>> fieldErrors = new HashMap<>();
-      for (ConstraintViolation<?> violation :
-          constraintViolationException.getConstraintViolations()) {
-        String field = violation.getPropertyPath().toString();
-        String message = violation.getMessage();
-        fieldErrors.computeIfAbsent(field, key -> new ArrayList<>()).add(message);
-      }
-      return buildValidationResponse(fieldErrors);
+      Map<String, List<String>> fieldErrors =
+          this.extractConstraintViolations(constraintViolationException);
+      return this.buildValidationResponse(fieldErrors);
     }
     log.error("Error interno de transacción:", rootCause != null ? rootCause : ex);
-    return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR_MESSAGE);
+    return this.buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR_MESSAGE);
+  }
+
+  private Map<String, List<String>> extractConstraintViolations(ConstraintViolationException ex) {
+    return ex.getConstraintViolations().stream()
+        .collect(
+            Collectors.groupingBy(
+                violation -> violation.getPropertyPath().toString(),
+                Collectors.mapping(ConstraintViolation::getMessage, Collectors.toList())));
   }
 
   // Error global (500)
   @ExceptionHandler(Exception.class)
   public ResponseEntity<Map<String, Object>> handleGlobalException(Exception ex) {
     log.error("Ocurrió un error interno inesperado:", ex);
-    return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR_MESSAGE);
+    return this.buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR_MESSAGE);
   }
 
   private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {
-    Map<String, Object> error = new HashMap<>();
-    error.put("timestamp", LocalDateTime.now());
-    error.put("status", status.value());
-    error.put("error", status.getReasonPhrase());
-    error.put("message", message);
-    return ResponseEntity.status(status).body(error);
+    return ResponseEntity.status(status)
+        .body(
+            Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", status.value(),
+                "error", status.getReasonPhrase(),
+                "message", message));
   }
 
   private ResponseEntity<Map<String, Object>> buildValidationResponse(
       Map<String, List<String>> fieldErrors) {
-    Map<String, Object> errorResponse = new HashMap<>();
-    errorResponse.put("timestamp", LocalDateTime.now());
-    errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
-    errorResponse.put("error", "Validation error");
-    errorResponse.put("message", "La validación de datos falló");
-    errorResponse.put("errors", fieldErrors);
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(
+            Map.of(
+                "timestamp",
+                LocalDateTime.now(),
+                "status",
+                HttpStatus.BAD_REQUEST.value(),
+                "error",
+                "Validation error",
+                "message",
+                "La validación de datos falló",
+                "errors",
+                fieldErrors));
   }
 }
