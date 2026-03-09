@@ -12,7 +12,6 @@ import org.hibernate.validator.constraints.URL;
 
 public record BookRequestDTO(
     @NotNull(message = "El ISBN es obligatorio")
-        // type = ANY acepta ISBN-10 o ISBN-13
         @ISBN(type = ISBN.Type.ANY, message = "El formato del ISBN no es válido")
         String isbn,
     @NotBlank(message = "El título es obligatorio")
