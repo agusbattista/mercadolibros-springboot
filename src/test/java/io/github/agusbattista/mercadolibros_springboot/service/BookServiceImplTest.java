@@ -140,7 +140,7 @@ class BookServiceImplTest {
 
     verify(genreRepository).findById(bookRequest.genreId());
     verify(bookRepository).findByIsbnIncludingDeleted(bookRequest.isbn());
-    verify(bookRepository, times(0)).save(any(Book.class));
+    verify(bookRepository, never()).save(any(Book.class));
   }
 
   @Test
@@ -212,7 +212,7 @@ class BookServiceImplTest {
         .isInstanceOf(ResourceNotFoundException.class);
     verify(genreRepository).findById(bookRequest.genreId());
     verify(bookRepository).findByUuid(uuid);
-    verify(bookRepository, times(0)).save(any(Book.class));
+    verify(bookRepository, never()).save(any(Book.class));
   }
 
   @Test
@@ -249,18 +249,6 @@ class BookServiceImplTest {
     verify(bookRepository).save(book);
   }
 
-  private BookRequestDTO createNewBookRequestWithIsbn(String newIsbn) {
-    return new BookRequestDTO(
-        newIsbn,
-        bookRequest.title(),
-        bookRequest.authors(),
-        bookRequest.price(),
-        bookRequest.description(),
-        bookRequest.publisher(),
-        bookRequest.genreId(),
-        bookRequest.imageUrl());
-  }
-
   @Test
   void update_WhenNewIsbnDoesNotExist_ShouldUpdateBook() {
     UUID uuid = UUID.randomUUID();
@@ -268,7 +256,7 @@ class BookServiceImplTest {
     book.setGenre(genre);
     book.setUuid(uuid);
     String newIsbn = "9780321247148";
-    BookRequestDTO newBookRequest = createNewBookRequestWithIsbn(newIsbn);
+    BookRequestDTO newBookRequest = this.createNewBookRequestWithIsbn(newIsbn);
     when(genreRepository.findById(newBookRequest.genreId())).thenReturn(Optional.of(genre));
     when(bookRepository.findByUuid(uuid)).thenReturn(Optional.of(book));
     when(bookRepository.findByIsbnIncludingDeleted(newIsbn)).thenReturn(Optional.empty());
@@ -319,11 +307,11 @@ class BookServiceImplTest {
     verify(genreRepository).findById(newBookRequest.genreId());
     verify(bookRepository).findByUuid(uuid);
     verify(bookRepository).findByIsbnIncludingDeleted(newIsbn);
-    verify(bookRepository, times(0)).save(any(Book.class));
+    verify(bookRepository, never()).save(any(Book.class));
   }
 
   @Test
-  void findlAll_Paged_ShouldReturnPagedResponse() {
+  void findAll_Paged_ShouldReturnPagedResponse() {
     Pageable pageable = PageRequest.of(0, 10);
     Book book = bookMapper.toEntity(bookRequest);
     book.setGenre(genre);
@@ -377,5 +365,17 @@ class BookServiceImplTest {
     assertThat(response.totalElements()).isZero();
     assertThat(response.totalPages()).isZero();
     verify(bookRepository).findAll(pageable);
+  }
+
+  private BookRequestDTO createNewBookRequestWithIsbn(String newIsbn) {
+    return new BookRequestDTO(
+        newIsbn,
+        bookRequest.title(),
+        bookRequest.authors(),
+        bookRequest.price(),
+        bookRequest.description(),
+        bookRequest.publisher(),
+        bookRequest.genreId(),
+        bookRequest.imageUrl());
   }
 }
