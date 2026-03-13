@@ -264,7 +264,7 @@ class BookRepositoryTest {
 
   @Test
   void findBooksByCriteria_Paged_AndSortedByGenreName_ShouldOrderResults() {
-    persistNewBook();
+    this.persistNewBook();
     Pageable pageable = PageRequest.of(0, 5, Sort.by("genre.name").ascending());
 
     Page<Book> found = bookRepository.findAll(pageable);
@@ -364,7 +364,7 @@ class BookRepositoryTest {
     genreTech.setCode("TECNOLOGIA");
     genreTech.setName("Tecnología");
     entityManager.persist(genreTech);
-    saveNewTechBook(genreTech);
+    this.saveNewTechBook(genreTech);
 
     assertThat(bookRepository.countByGenreIdIncludingDeleted(genreTech.getId())).isEqualTo(1);
   }
@@ -375,7 +375,7 @@ class BookRepositoryTest {
     genreTech.setCode("TECNOLOGIA");
     genreTech.setName("Tecnología");
     entityManager.persist(genreTech);
-    Book techBook = saveNewTechBook(genreTech);
+    Book techBook = this.saveNewTechBook(genreTech);
     techBook.setDeleted(true);
     entityManager.persist(techBook);
     entityManager.flush();
