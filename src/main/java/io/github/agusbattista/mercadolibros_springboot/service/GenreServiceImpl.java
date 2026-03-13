@@ -81,7 +81,7 @@ public class GenreServiceImpl implements GenreService {
     String formattedName = StringFormatter.formatName(genre.name());
     String code = StringFormatter.generateCode(formattedName);
     if (!existingGenre.getName().equals(formattedName)) {
-      this.checkNameIsUniqueOrThrow(id, formattedName, code);
+      this.checkNameIsUniqueOrThrow(id, code);
     }
     existingGenre.setName(formattedName);
     existingGenre.setCode(code);
@@ -101,7 +101,10 @@ public class GenreServiceImpl implements GenreService {
       Genre existingGenre, String code, String name) {
     if (!existingGenre.isDeleted()) {
       throw new DuplicateResourceException(
-          "Ya existe un género activo con el código: " + code + " y el nombre: " + name);
+          "Ya existe un género activo con el código: "
+              + code
+              + " y el nombre: "
+              + existingGenre.getName());
     } else {
       existingGenre.setDeleted(false);
       existingGenre.setName(name);
@@ -120,11 +123,14 @@ public class GenreServiceImpl implements GenreService {
         .orElseThrow(() -> new ResourceNotFoundException(prefix + this.buildIdNotFoundMessage(id)));
   }
 
-  private void checkNameIsUniqueOrThrow(Long id, String formattedName, String code) {
+  private void checkNameIsUniqueOrThrow(Long id, String code) {
     Optional<Genre> duplicateCandidate = genreRepository.findByCodeIncludingDeleted(code);
     if (duplicateCandidate.isPresent() && !duplicateCandidate.get().getId().equals(id)) {
+      Genre duplicate = duplicateCandidate.get();
       throw new DuplicateResourceException(
-          "No se puede actualizar. El nombre: " + formattedName + " ya pertenece a otro género");
+          "No se puede actualizar. El nombre: "
+              + duplicate.getName()
+              + " ya pertenece a otro género");
     }
   }
 
