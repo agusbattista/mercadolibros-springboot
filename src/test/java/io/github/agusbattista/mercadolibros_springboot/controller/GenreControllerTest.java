@@ -3,7 +3,7 @@ package io.github.agusbattista.mercadolibros_springboot.controller;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -238,7 +238,7 @@ class GenreControllerTest {
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errors").exists());
 
-    verify(genreService, times(0)).create(any());
+    verify(genreService, never()).create(any());
   }
 
   @Test
@@ -266,7 +266,7 @@ class GenreControllerTest {
         .andExpect(jsonPath("$.status").value(400))
         .andExpect(jsonPath("$.message").exists());
 
-    verify(genreService, times(0)).create(any());
+    verify(genreService, never()).create(any());
   }
 
   @Test
@@ -301,7 +301,7 @@ class GenreControllerTest {
         .andExpect(jsonPath("$.status").value(400))
         .andExpect(jsonPath("$.message").exists());
 
-    verify(genreService, times(0)).update(any(), any());
+    verify(genreService, never()).update(any(), any());
   }
 
   @Test
