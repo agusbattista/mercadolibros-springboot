@@ -130,7 +130,7 @@ public class GenreServiceImpl implements GenreService {
       throw new DuplicateResourceException(
           "No se puede actualizar. El nombre: "
               + duplicate.getName()
-              + " ya pertenece a otro género");
+              + " ya pertenece a otro género activo o en el registro histórico");
     }
   }
 
