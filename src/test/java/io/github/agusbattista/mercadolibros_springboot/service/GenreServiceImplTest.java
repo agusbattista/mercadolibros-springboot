@@ -2,7 +2,7 @@ package io.github.agusbattista.mercadolibros_springboot.service;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -57,7 +57,7 @@ class GenreServiceImplTest {
   }
 
   @Test
-  void findByCode_WhenCodeExists_ShoulReturnGenre() {
+  void findByCode_WhenCodeExists_ShouldReturnGenre() {
     String code = "FANTASIA";
     when(genreRepository.findByCode(code)).thenReturn(Optional.of(genre));
 
@@ -187,7 +187,7 @@ class GenreServiceImplTest {
         .isInstanceOf(DuplicateResourceException.class);
 
     verify(genreRepository).findByCodeIncludingDeleted(genre.getCode());
-    verify(genreRepository, times(0)).save(genre);
+    verify(genreRepository, never()).save(genre);
   }
 
   @Test
@@ -219,7 +219,7 @@ class GenreServiceImplTest {
 
     verify(genreRepository).findById(genreId);
     verify(bookRepository).countByGenreIdIncludingDeleted(genreId);
-    verify(genreRepository, times(0)).delete(genre);
+    verify(genreRepository, never()).delete(genre);
   }
 
   @Test
@@ -231,7 +231,7 @@ class GenreServiceImplTest {
         .isInstanceOf(ResourceNotFoundException.class);
 
     verify(genreRepository).findById(inexistentId);
-    verify(genreRepository, times(0)).delete(any(Genre.class));
+    verify(genreRepository, never()).delete(any(Genre.class));
   }
 
   @Test
@@ -283,7 +283,7 @@ class GenreServiceImplTest {
         .isInstanceOf(ResourceNotFoundException.class);
 
     verify(genreRepository).findById(inexistentId);
-    verify(genreRepository, times(0)).save(any(Genre.class));
+    verify(genreRepository, never()).save(any(Genre.class));
   }
 
   @Test
@@ -299,6 +299,6 @@ class GenreServiceImplTest {
 
     verify(genreRepository).findById(id);
     verify(genreRepository).findByCodeIncludingDeleted("CIENCIA_FICCION");
-    verify(genreRepository, times(0)).save(any(Genre.class));
+    verify(genreRepository, never()).save(any(Genre.class));
   }
 }

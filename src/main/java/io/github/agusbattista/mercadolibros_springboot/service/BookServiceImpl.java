@@ -14,6 +14,7 @@ import io.github.agusbattista.mercadolibros_springboot.utils.StringFormatter;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,20 +22,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class BookServiceImpl implements BookService {
 
   private static final String NOT_FOUND_MESSAGE = " no encontrado";
-
   private final BookRepository bookRepository;
   private final BookMapper bookMapper;
   private final GenreRepository genreRepository;
-
-  public BookServiceImpl(
-      BookRepository bookRepository, BookMapper bookMapper, GenreRepository genreRepository) {
-    this.bookRepository = bookRepository;
-    this.bookMapper = bookMapper;
-    this.genreRepository = genreRepository;
-  }
 
   @Override
   public PagedResponse<BookResponseDTO> findAll(Pageable pageable) {
@@ -66,45 +60,15 @@ public class BookServiceImpl implements BookService {
   @Transactional
   public BookResponseDTO create(BookRequestDTO requestBook) {
     Objects.requireNonNull(requestBook, "El libro que quiere guardar no puede ser nulo");
-    Genre genre =
-        genreRepository
-            .findById(requestBook.genreId())
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundException(
-                        "No se puede crear el libro. Género con ID: "
-                            + requestBook.genreId()
-                            + NOT_FOUND_MESSAGE));
+    Genre genre = this.getGenreOrThrow(requestBook.genreId(), "No se puede crear el libro");
     Optional<Book> optionalBook = bookRepository.findByIsbnIncludingDeleted(requestBook.isbn());
     if (optionalBook.isPresent()) {
       Book existingBook = optionalBook.get();
-      if (!existingBook.isDeleted()) {
-        throw new DuplicateResourceException(
-            "Ya existe un libro activo con el ISBN: " + requestBook.isbn());
-      } else {
-        existingBook.setDeleted(false);
-        existingBook.setGenre(genre);
-        bookMapper.updateEntityFromRequest(requestBook, existingBook);
-        return bookMapper.toResponse(bookRepository.save(existingBook));
-      }
+      return this.restoreAndUpdateBookOrThrow(requestBook, existingBook, genre);
     }
     Book newBook = bookMapper.toEntity(requestBook);
     newBook.setGenre(genre);
     return bookMapper.toResponse(bookRepository.save(newBook));
-  }
-
-  @Override
-  @Transactional
-  public void deleteByUuid(UUID uuid) {
-    Objects.requireNonNull(uuid, "El UUID no puede ser nulo para intentar la eliminación");
-    Book book =
-        bookRepository
-            .findByUuid(uuid)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundException(
-                        "No se puede eliminar. " + this.uuidNotFound(uuid)));
-    bookRepository.delete(book);
   }
 
   @Transactional
@@ -113,35 +77,68 @@ public class BookServiceImpl implements BookService {
     Objects.requireNonNull(uuid, "El UUID no puede ser nulo");
     Objects.requireNonNull(
         requestBook, "Los datos del libro que quiere actualizar no pueden ser nulos");
-    Genre genre =
-        genreRepository
-            .findById(requestBook.genreId())
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundException(
-                        "No se puede actualizar el libro. Género con ID: "
-                            + requestBook.genreId()
-                            + NOT_FOUND_MESSAGE));
-    Book existingBook =
-        bookRepository
-            .findByUuid(uuid)
-            .orElseThrow(() -> new ResourceNotFoundException(this.uuidNotFound(uuid)));
+    Genre genre = this.getGenreOrThrow(requestBook.genreId(), "No se puede actualizar el libro");
+    Book existingBook = this.getBookByUuidOrThrow(uuid, "No se puede actualizar el libro");
     if (!existingBook.getIsbn().equals(requestBook.isbn())) {
-      Optional<Book> duplicateCandidate =
-          bookRepository.findByIsbnIncludingDeleted(requestBook.isbn());
-      if (duplicateCandidate.isPresent()) {
-        throw new DuplicateResourceException(
-            "No se puede actualizar. El ISBN: "
-                + requestBook.isbn()
-                + " ya pertenece a otro libro");
-      }
+      this.checkIsbnIsUniqueOrThrow(requestBook.isbn());
     }
-    existingBook.setGenre(genre);
-    bookMapper.updateEntityFromRequest(requestBook, existingBook);
+    this.updateBookEntityFromRequest(requestBook, existingBook, genre);
     return bookMapper.toResponse(bookRepository.save(existingBook));
   }
 
-  private String uuidNotFound(UUID uuid) {
+  @Override
+  @Transactional
+  public void deleteByUuid(UUID uuid) {
+    Objects.requireNonNull(uuid, "El UUID no puede ser nulo para intentar la eliminación");
+    Book book = this.getBookByUuidOrThrow(uuid, "No se puede eliminar");
+    bookRepository.delete(book);
+  }
+
+  private Genre getGenreOrThrow(Long genreId, String errorMessagePrefix) {
+    return genreRepository
+        .findById(genreId)
+        .orElseThrow(
+            () ->
+                new ResourceNotFoundException(
+                    errorMessagePrefix + ". Género con ID: " + genreId + NOT_FOUND_MESSAGE));
+  }
+
+  private BookResponseDTO restoreAndUpdateBookOrThrow(
+      BookRequestDTO requestBook, Book existingBook, Genre genre) {
+    if (!existingBook.isDeleted()) {
+      throw new DuplicateResourceException(
+          "Ya existe un libro activo con el ISBN: " + requestBook.isbn());
+    } else {
+      existingBook.setDeleted(false);
+      this.updateBookEntityFromRequest(requestBook, existingBook, genre);
+      return bookMapper.toResponse(bookRepository.save(existingBook));
+    }
+  }
+
+  private Book getBookByUuidOrThrow(UUID uuid, String errorMessagePrefix) {
+    return bookRepository
+        .findByUuid(uuid)
+        .orElseThrow(
+            () ->
+                new ResourceNotFoundException(
+                    errorMessagePrefix + ". " + this.buildUuidNotFoundMessage(uuid)));
+  }
+
+  private void updateBookEntityFromRequest(
+      BookRequestDTO requestBook, Book existingBook, Genre genre) {
+    existingBook.setGenre(genre);
+    bookMapper.updateEntityFromRequest(requestBook, existingBook);
+  }
+
+  private void checkIsbnIsUniqueOrThrow(String isbn) {
+    Optional<Book> duplicateCandidate = bookRepository.findByIsbnIncludingDeleted(isbn);
+    if (duplicateCandidate.isPresent()) {
+      throw new DuplicateResourceException(
+          "No se puede actualizar. El ISBN: " + isbn + " ya pertenece a otro libro");
+    }
+  }
+
+  private String buildUuidNotFoundMessage(UUID uuid) {
     return "Libro con UUID: " + uuid + NOT_FOUND_MESSAGE;
   }
 

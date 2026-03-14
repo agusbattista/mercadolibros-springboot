@@ -13,27 +13,20 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class BookDataLoader implements CommandLineRunner {
-
-  private static final Logger log = LoggerFactory.getLogger(BookDataLoader.class);
 
   private final BookRepository bookRepository;
   private final GenreRepository genreRepository;
   private final ObjectMapper objectMapper;
-
-  public BookDataLoader(
-      BookRepository bookRepository, GenreRepository genreRepository, ObjectMapper objectMapper) {
-    this.bookRepository = bookRepository;
-    this.genreRepository = genreRepository;
-    this.objectMapper = objectMapper;
-  }
 
   private record BookSeedDTO(
       String isbn,
@@ -68,6 +61,34 @@ public class BookDataLoader implements CommandLineRunner {
   }
 
   @NonNull
+  private Map<String, Genre> saveGenres(List<BookSeedDTO> seedBooks) {
+    Map<String, Genre> genreMap = new HashMap<>();
+    seedBooks.forEach(
+        seed -> {
+          if (!genreMap.containsKey(seed.genre())) {
+            String formattedName = StringFormatter.formatName(seed.genre());
+            String code = StringFormatter.generateCode(formattedName);
+            Genre genre = this.getOrCreateGenre(code, formattedName);
+            genreMap.put(seed.genre(), genre);
+          }
+        });
+    return genreMap;
+  }
+
+  @NonNull
+  private Genre getOrCreateGenre(String code, String formattedName) {
+    return genreRepository
+        .findByCode(code)
+        .orElseGet(
+            () -> {
+              Genre newGenre = new Genre();
+              newGenre.setName(formattedName);
+              newGenre.setCode(code);
+              return genreRepository.save(newGenre);
+            });
+  }
+
+  @NonNull
   private List<Book> createBookList(List<BookSeedDTO> seedBooks, Map<String, Genre> genreMap) {
     return seedBooks.stream()
         .map(
@@ -84,32 +105,5 @@ public class BookDataLoader implements CommandLineRunner {
               return book;
             })
         .toList();
-  }
-
-  @NonNull
-  private Map<String, Genre> saveGenres(List<BookSeedDTO> seedBooks) {
-    Map<String, Genre> genreMap = new HashMap<>();
-    for (BookSeedDTO seed : seedBooks) {
-      if (!genreMap.containsKey(seed.genre())) {
-        String formattedName = StringFormatter.formatName(seed.genre());
-        String code = StringFormatter.generateCode(formattedName);
-        Genre genre = getGenre(code, formattedName);
-        genreMap.put(seed.genre(), genre);
-      }
-    }
-    return genreMap;
-  }
-
-  @NonNull
-  private Genre getGenre(String code, String formattedName) {
-    return genreRepository
-        .findByCode(code)
-        .orElseGet(
-            () -> {
-              Genre newGenre = new Genre();
-              newGenre.setName(formattedName);
-              newGenre.setCode(code);
-              return genreRepository.save(newGenre);
-            });
   }
 }

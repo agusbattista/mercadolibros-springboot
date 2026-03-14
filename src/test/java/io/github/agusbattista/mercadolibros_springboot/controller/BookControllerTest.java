@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -274,7 +274,7 @@ class BookControllerTest {
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errors").exists());
 
-    verify(bookService, times(0)).create(any());
+    verify(bookService, never()).create(any());
   }
 
   @Test
@@ -302,7 +302,7 @@ class BookControllerTest {
         .andExpect(jsonPath("$.status").value(400))
         .andExpect(jsonPath("$.message").exists());
 
-    verify(bookService, times(0)).create(any());
+    verify(bookService, never()).create(any());
   }
 
   @Test
@@ -336,7 +336,7 @@ class BookControllerTest {
         .andExpect(jsonPath("$.status").value(400))
         .andExpect(jsonPath("$.message").exists());
 
-    verify(bookService, times(0)).update(any(), any());
+    verify(bookService, never()).update(any(), any());
   }
 
   @Test

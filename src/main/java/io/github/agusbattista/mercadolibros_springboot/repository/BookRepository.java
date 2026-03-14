@@ -28,11 +28,13 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
   @EntityGraph(attributePaths = {"genre"})
   @Query(
-      "SELECT b FROM Book b WHERE "
-          + "(:title IS NULL OR LOWER(b.title) LIKE LOWER(CONCAT('%', :title, '%'))) AND "
-          + "(:authors IS NULL OR LOWER(b.authors) LIKE LOWER(CONCAT('%', :authors, '%'))) AND "
-          + "(:genre IS NULL OR (b.genre.name) = (:genre)) AND "
-          + "(:publisher IS NULL OR LOWER(b.publisher) LIKE LOWER(CONCAT('%', :publisher, '%')))")
+      """
+      SELECT b FROM Book b WHERE
+      (:title IS NULL OR LOWER(b.title) LIKE LOWER(CONCAT('%', :title, '%'))) AND
+      (:authors IS NULL OR LOWER(b.authors) LIKE LOWER(CONCAT('%', :authors, '%'))) AND
+      (:genre IS NULL OR (b.genre.name) = (:genre)) AND
+      (:publisher IS NULL OR LOWER(b.publisher) LIKE LOWER(CONCAT('%', :publisher, '%')))
+      """)
   Page<Book> findBooksByCriteria(
       @Param("title") String title,
       @Param("authors") String authors,

@@ -31,19 +31,15 @@ public record PagedResponse<T>(
 
   @NonNull
   private static <T> Map<String, String> createSortMap(Page<T> page) {
-    Map<String, String> sortInfo = new LinkedHashMap<>();
     if (page.getSort().isUnsorted()) {
-      sortInfo.put("sorted", "NONE");
-    } else {
-      sortInfo =
-          page.getSort().stream()
-              .collect(
-                  Collectors.toMap(
-                      Sort.Order::getProperty,
-                      order -> order.getDirection().name(),
-                      (oldValue, newValue) -> oldValue,
-                      LinkedHashMap::new));
+      return Map.of("sorted", "NONE");
     }
-    return sortInfo;
+    return page.getSort().stream()
+        .collect(
+            Collectors.toMap(
+                Sort.Order::getProperty,
+                order -> order.getDirection().name(),
+                (oldValue, newValue) -> oldValue,
+                LinkedHashMap::new));
   }
 }

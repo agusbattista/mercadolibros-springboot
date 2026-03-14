@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -26,6 +27,7 @@ class BookDataLoaderTest {
 
   @Mock private BookRepository bookRepository;
   @Mock private GenreRepository genreRepository;
+  @Captor private ArgumentCaptor<List<Book>> listCaptor;
   private final ObjectMapper objectMapper = new ObjectMapper();
   private BookDataLoader bookDataLoader;
 
@@ -42,8 +44,6 @@ class BookDataLoaderTest {
 
     bookDataLoader.run();
 
-    @SuppressWarnings("unchecked")
-    ArgumentCaptor<List<Book>> listCaptor = ArgumentCaptor.forClass(List.class);
     verify(bookRepository).saveAll(listCaptor.capture());
     List<Book> savedBooks = listCaptor.getValue();
 

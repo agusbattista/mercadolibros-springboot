@@ -6,6 +6,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -13,6 +16,9 @@ import org.hibernate.annotations.SQLRestriction;
 @Table(name = "genres")
 @SQLDelete(sql = "UPDATE genres SET deleted = true WHERE id = ?")
 @SQLRestriction("deleted = false")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Genre {
 
   @Id
@@ -31,42 +37,6 @@ public class Genre {
    */
   @Column(nullable = false)
   private boolean deleted = false;
-
-  public Genre() {
-    /* Requerido por JPA/Hibernate */
-  }
-
-  public Long getId() {
-    return id;
-  }
-
-  public void setId(Long id) {
-    this.id = id;
-  }
-
-  public String getCode() {
-    return code;
-  }
-
-  public void setCode(String code) {
-    this.code = code;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public boolean isDeleted() {
-    return deleted;
-  }
-
-  public void setDeleted(boolean deleted) {
-    this.deleted = deleted;
-  }
 
   @Override
   public boolean equals(Object o) {

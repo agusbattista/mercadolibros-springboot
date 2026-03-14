@@ -3,6 +3,9 @@ package io.github.agusbattista.mercadolibros_springboot.model;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.UUID;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -13,6 +16,9 @@ import org.hibernate.type.SqlTypes;
 @Table(name = "books")
 @SQLDelete(sql = "UPDATE books SET deleted = true WHERE id = ?")
 @SQLRestriction("deleted = false")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Book {
 
   @Id
@@ -55,98 +61,6 @@ public class Book {
 
   @Column(nullable = false, length = 500)
   private String imageUrl;
-
-  public Book() {
-    /* Requerido por JPA/Hibernate */
-  }
-
-  public Long getId() {
-    return id;
-  }
-
-  public void setId(Long id) {
-    this.id = id;
-  }
-
-  public UUID getUuid() {
-    return uuid;
-  }
-
-  public void setUuid(UUID uuid) {
-    this.uuid = uuid;
-  }
-
-  public String getIsbn() {
-    return isbn;
-  }
-
-  public void setIsbn(String isbn) {
-    this.isbn = isbn;
-  }
-
-  public String getTitle() {
-    return title;
-  }
-
-  public void setTitle(String title) {
-    this.title = title;
-  }
-
-  public String getAuthors() {
-    return authors;
-  }
-
-  public void setAuthors(String authors) {
-    this.authors = authors;
-  }
-
-  public BigDecimal getPrice() {
-    return price;
-  }
-
-  public void setPrice(BigDecimal price) {
-    this.price = price;
-  }
-
-  public String getDescription() {
-    return description;
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
-  }
-
-  public String getPublisher() {
-    return publisher;
-  }
-
-  public void setPublisher(String publisher) {
-    this.publisher = publisher;
-  }
-
-  public Genre getGenre() {
-    return genre;
-  }
-
-  public void setGenre(Genre genre) {
-    this.genre = genre;
-  }
-
-  public String getImageUrl() {
-    return imageUrl;
-  }
-
-  public void setImageUrl(String imageUrl) {
-    this.imageUrl = imageUrl;
-  }
-
-  public boolean isDeleted() {
-    return deleted;
-  }
-
-  public void setDeleted(boolean deleted) {
-    this.deleted = deleted;
-  }
 
   @Override
   public boolean equals(Object o) {
