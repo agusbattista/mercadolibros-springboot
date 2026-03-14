@@ -40,12 +40,6 @@
             },
             {
               "key": "sort",
-              "value": "price,desc",
-              "type": "text",
-              "disabled": true
-            },
-            {
-              "key": "sort",
               "value": "price,asc",
               "type": "text",
               "disabled": true
@@ -53,6 +47,12 @@
             {
               "key": "sort",
               "value": "genre.name,asc",
+              "disabled": true
+            },
+            {
+              "key": "sort",
+              "value": "price,desc",
+              "type": "text",
               "disabled": true
             },
             {
