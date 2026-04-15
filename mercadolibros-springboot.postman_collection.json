@@ -317,6 +317,12 @@
             {
               "key": "sort",
               "value": "name,asc"
+            },
+            {
+              "key": "sort",
+              "value": "name,desc",
+              "type": "text",
+              "disabled": true
             }
           ]
         }
@@ -351,7 +357,7 @@
       "response": []
     },
     {
-      "name": "get by id",
+      "name": "get genre by id",
       "request": {
         "method": "GET",
         "header": [],
@@ -370,7 +376,7 @@
       "response": []
     },
     {
-      "name": "get by code",
+      "name": "get genre by code",
       "request": {
         "method": "GET",
         "header": [],
@@ -390,7 +396,7 @@
       "response": []
     },
     {
-      "name": "search by name",
+      "name": "search genre by name",
       "request": {
         "method": "GET",
         "header": [],
@@ -484,6 +490,248 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "get authors",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/authors",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "authors"
+          ],
+          "query": [
+            {
+              "key": "size",
+              "value": "1",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "page",
+              "value": "0",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "sort",
+              "value": "fullName,asc",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Devuelve todos los autores.\n\nSoporta paginación y ordenamiento. En la pestaña \"Params\" puede encontrar ejemplos."
+      },
+      "response": []
+    },
+    {
+      "name": "get author by uuid",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/authors/{{UUID}}",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "authors",
+            "{{UUID}}"
+          ]
+        },
+        "description": "Devuelve un autor en base a su UUID."
+      },
+      "response": []
+    },
+    {
+      "name": "search authors by name",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/authors/search",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "authors",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "name",
+              "value": " martin fO",
+              "disabled": true
+            },
+            {
+              "key": "name",
+              "value": "\"\"",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "name",
+              "value": "gabriel",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "name",
+              "value": "eric",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "create author",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    let jsonData = pm.response.json();",
+              "    pm.collectionVariables.set(\"UUID\", jsonData.uuid);",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"fullName\": \" george R. R. martin\",\n    \"biography\": \"George R. R. Martin es un escritor y guionista estadounidense, famoso por crear la saga 'Canción de Hielo y Fuego', adaptada como 'Game of Thrones'. Es una de las figuras más influyentes de la fantasía moderna.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/authors",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "authors"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "put author",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"fullName\": \"erich gamma MODIFICADO\",\n    \"biography\": \"Erich Gamma es un informático suizo, ampliamente conocido como uno de los 'Gang of Four', autores del libro 'Design Patterns', obra fundamental en la ingeniería de software. Ha trabajado en herramientas de desarrollo y patrones de diseño orientado a objetos.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/authors/{{UUID}}",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "authors",
+            "{{UUID}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "delete author",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"fullName\": \"Erich Gamma MOD\",\n    \"biography\": \"Erich Gamma es un informático suizo, ampliamente conocido como uno de los 'Gang of Four', autores del libro 'Design Patterns', obra fundamental en la ingeniería de software. Ha trabajado en herramientas de desarrollo y patrones de diseño orientado a objetos.\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/authors/{{UUID}}",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "authors",
+            "{{UUID}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "restore author",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"fullName\": \"Erich Gamma MOD\",\n    \"biography\": \"Erich Gamma es un informático suizo, ampliamente conocido como uno de los 'Gang of Four', autores del libro 'Design Patterns', obra fundamental en la ingeniería de software. Ha trabajado en herramientas de desarrollo y patrones de diseño orientado a objetos.\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/authors/{{UUID}}/restore",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "authors",
+            "{{UUID}}",
+            "restore"
+          ]
+        }
+      },
+      "response": []
     }
   ],
   "event": [
@@ -525,13 +773,11 @@
     },
     {
       "key": "ID",
-      "value": "",
-      "type": "default"
+      "value": ""
     },
     {
       "key": "CODE",
-      "value": "",
-      "type": "default"
+      "value": ""
     }
   ]
 }
