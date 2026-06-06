@@ -44,6 +44,7 @@ docker compose up -d
 
 La API estará disponible en:
 <http://localhost:8080/api/books>
+
 <http://localhost:8080/api/genres>
 
 El panel phpMyAdmin estará disponible en:
@@ -135,10 +136,10 @@ docker compose up -d mysql phpmyadmin
 
 Para evitar la creación de géneros duplicados por errores de tipeo o diferencias en mayúsculas y minúsculas, la API implementa una normalización estricta al crear o actualizar géneros:
 - Formateo: un nombre ingresado como `   cIenCia  FiCcÍon  ` es convertido automáticamente a `Ciencia Ficción`
-- Código único: a partir del nombre se genera un código único en mayúsculas y con guiones bajos. Por ejemplo: `Ciencia Ficción` se convierte en `CIENCIA_FICCION`. Este código es utilizado para búsquedas exactas y para evitar duplicados
+- Código único: a partir del nombre se genera un código único en mayúsculas y con guiones bajos. Por ejemplo: `Ciencia Ficción` se convierte en `CIENCIA_FICCION`. Este código es utilizado para búsquedas exactas y para evitar duplicados.
 
 ### Integridad referencial entre libros y géneros
-- Borrado protegido: no se permite eliminar un género si existen libros en el catálogo (activos o eliminados lógicamente) que estén asociados a él. En dicho caso, la API devolverá un error con su mensaje y código correspondiente
+- Borrado protegido: no se permite eliminar un género si existen libros en el catálogo (activos o eliminados lógicamente) que estén asociados a él. En dicho caso, la API devolverá un error con su mensaje y código correspondiente.
 
 ### Paginación y ordenamiento
 
