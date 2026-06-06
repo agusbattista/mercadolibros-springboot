@@ -49,7 +49,7 @@ public class AuthorController {
 
   @GetMapping("/search")
   public ResponseEntity<PagedResponse<AuthorResponseDTO>> findByName(
-      @RequestParam String name, Pageable pageable) {
+      @RequestParam(defaultValue = "") String name, Pageable pageable) {
     return ResponseEntity.ok(authorService.findByName(name, pageable));
   }
 
