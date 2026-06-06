@@ -15,6 +15,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 @Slf4j
@@ -27,6 +28,13 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(ResourceNotFoundException.class)
   public ResponseEntity<Map<String, Object>> handleResourceNotFound(ResourceNotFoundException ex) {
     log.warn("Recurso no encontrado: {}", ex.getMessage());
+    return this.buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+  }
+
+  // Recurso estático no encontrado (404)
+  @ExceptionHandler(NoResourceFoundException.class)
+  public ResponseEntity<Map<String, Object>> handleNoResourceFound(NoResourceFoundException ex) {
+    log.warn("Recurso estático no encontrado: {}", ex.getMessage());
     return this.buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
   }
 
