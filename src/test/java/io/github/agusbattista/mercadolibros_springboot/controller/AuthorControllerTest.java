@@ -3,6 +3,7 @@ package io.github.agusbattista.mercadolibros_springboot.controller;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -127,6 +128,21 @@ class AuthorControllerTest {
         .andExpect(jsonPath("$.content[0].fullName").value(authorResponse.fullName()));
 
     verify(authorService).findByName(any(String.class), any(Pageable.class));
+  }
+
+  @Test
+  void findByName_WhenNameIsEmpty_ShouldReturnAllAuthors() throws Exception {
+    String url = BASE_URL + "/search";
+    when(authorService.findByName(eq(""), any(Pageable.class))).thenReturn(pagedResponse);
+
+    mockMvc
+        .perform(get(url))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content[0].uuid").value(uuid.toString()))
+        .andExpect(jsonPath("$.content[0].fullName").value(authorResponse.fullName()));
+
+    verify(authorService).findByName(eq(""), any(Pageable.class));
   }
 
   @Test
