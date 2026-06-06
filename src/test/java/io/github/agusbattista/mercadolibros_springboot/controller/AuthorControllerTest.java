@@ -146,6 +146,26 @@ class AuthorControllerTest {
   }
 
   @Test
+  void findByName_WhenNameDoesNotExist_ShouldReturnEmptyPagedResponse() throws Exception {
+    String name = "Pepe";
+    String url = BASE_URL + "/search?name=" + name;
+    PagedResponse<AuthorResponseDTO> emptyPagedResponse =
+        new PagedResponse<>(List.of(), 0, 5, 0, 0, true, Map.of("sorted", "NONE"));
+    when(authorService.findByName(eq(name), any(Pageable.class))).thenReturn(emptyPagedResponse);
+
+    mockMvc
+        .perform(get(url))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.content").isEmpty())
+        .andExpect(jsonPath("$.totalElements").value(0))
+        .andExpect(jsonPath("$.last").value(true));
+
+    verify(authorService).findByName(eq(name), any(Pageable.class));
+  }
+
+  @Test
   void create_WhenValidInput_ShouldReturnCreatedStatus() throws Exception {
     String requestBody = objectMapper.writeValueAsString(authorRequest);
     when(authorService.create(any(AuthorRequestDTO.class))).thenReturn(authorResponse);
@@ -169,6 +189,19 @@ class AuthorControllerTest {
         .perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(requestBody))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errors").exists());
+
+    verify(authorService, never()).create(any());
+  }
+
+  @Test
+  void create_WhenEmptyBodyRequest_ShouldReturnBadRequest() throws Exception {
+    String invalidRequestBody = "";
+
+    mockMvc
+        .perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(invalidRequestBody))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.message").exists());
 
     verify(authorService, never()).create(any());
   }
